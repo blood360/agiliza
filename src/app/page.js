@@ -5,9 +5,9 @@ import MenuInferior from '@/components/MenuInferior';
 export default function Home() {
   // Mock de produtos (depois vou puxar do banco)
   const produtos = [
-    { id: 1, nome: "Catuaba Selvagem 1L", preco: 18.00, img: "https://via.placeholder.com/150" },
-    { id: 2, nome: "Catuaba Açaí 1L", preco: 18.00, img: "https://via.placeholder.com/150" },
-    { id: 3, nome: "Cigarro de Palha", preco: 12.00, img: "https://via.placeholder.com/150" },
+    { id: 1, nome: "Catuaba Selvagem 1L", preco: 18.00, img: "catuaba-selvagem.jpg" },
+    { id: 2, nome: "Catuaba Açaí 1L", preco: 18.00, img: "catuaba-acai.jpg" },
+    { id: 3, nome: "Cigarro de Palha", preco: 13.00, img: "cigarro.jpg" },
   ];
 
   return (
