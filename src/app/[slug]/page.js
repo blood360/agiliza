@@ -3,23 +3,15 @@ import styles from '@/app/page.module.css';
 import ListaProdutos from '@/components/ListaProdutos';
 import MenuInferior from '@/components/MenuInferior';
 import { useParams } from 'next/navigation';
-import BotaoCompatilhar from '@/components/BotaoCompartilhar'
+// ESSA LINHA AQUI É A QUE TAVA FALTANDO, MACHO:
+import BotaoCompartilhar from '@/components/BotaoCompartilhar'; 
 
 export default function Home() {
-  // 1. Usamos apenas o useParams() pra pegar o slug da URL
   const params = useParams();
   const slug = params?.slug;
 
-  // 2. Proteção: se o slug ainda não carregou, a gente não deixa o código quebrar
-  if (!slug) {
-    return (
-      <main className={styles.main}>
-        <p>Carregando loja, aguarde um tiquinho...</p>
-      </main>
-    );
-  }
+  if (!slug) return <main className={styles.main}><p>Carregando...</p></main>;
 
-  // 3. Agora sim a gente formata o nome da loja
   const nomeDaLoja = slug.replace(/-/g, ' ').toUpperCase();
 
   const produtos = [
@@ -33,7 +25,9 @@ export default function Home() {
       <header className={styles.header}>
         <h1 className={styles.logoAgiliza}>Agiliza</h1>
         <p className={styles.nomeAssinante}>{nomeDaLoja}</p>
-        <BotaoCompartilhar />
+        
+        {/* Agora o componente vai funcionar porque a gente importou ele! */}
+        <BotaoCompartilhar /> 
       </header>
 
       <ListaProdutos produtos={produtos} />
