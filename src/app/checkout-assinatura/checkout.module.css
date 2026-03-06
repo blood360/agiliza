@@ -1,0 +1,41 @@
+.container {
+  background: #f1f3f5;
+  min-height: 100vh;
+  padding: 50px 10%;
+  text-align: center;
+}
+
+.card {
+  background: #fff;
+  padding: 40px;
+  border-radius: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.preco {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #e63946;
+}
+
+.btnFinalizar {
+  width: 100%;
+  background: #25d366;
+  color: #fff;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.btnVoltar {
+  display: block;
+  margin-top: 20px;
+  color: #666;
+  text-decoration: none;
+}

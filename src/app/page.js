@@ -121,7 +121,12 @@ export default function Landing() {
                             <li>Pedidos via WhatsApp</li>
                             <li>Suporte via chat</li>
                         </ul>
-                        <button className={styles.btnPlano}>Assinar agora</button>
+                        <Link
+                            href="/checkout-assinatura?plano=Iniciante"
+                            className={styles.btnPlano}
+                        >
+                            Assinar Agora
+                        </Link>
                     </div>
                     <div className={`${styles.planoCard} ${styles.planoDestaque}`}>
                         <span className={styles.badge}>Mais Popular</span>
@@ -133,7 +138,12 @@ export default function Landing() {
                             <li>Relatórios de vendas</li>
                             <li>Suporte prioritário</li>
                         </ul>
-                        <button className={styles.btnPlano}>Assinar agora</button>
+                        <Link
+                            href="/checkout-assinatura?plano=Pro"
+                            className={styles.btnPlano}
+                        >
+                            Assinar Agora
+                        </Link>
                     </div>
                 </div>
             </section>
