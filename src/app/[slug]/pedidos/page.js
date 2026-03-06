@@ -16,7 +16,7 @@ export default function Pedidos() {
             <div className={styles.containerPedidos}>
                 {pedidos.length === 0 ? (
                     <div className={styles.vazio}>
-                        <span>📭</span>
+                        <span>🛒</span>
                         <p>Você não possui nenhum pedido!</p>
                     </div>
                 ) : (
