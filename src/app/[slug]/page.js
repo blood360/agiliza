@@ -3,6 +3,7 @@ import styles from '@/app/page.module.css';
 import ListaProdutos from '@/components/ListaProdutos';
 import MenuInferior from '@/components/MenuInferior';
 import { useParams } from 'next/navigation';
+import BotaoCompatilhar from '@/components/BotaoCompartilhar'
 
 export default function Home() {
   // 1. Usamos apenas o useParams() pra pegar o slug da URL
