@@ -1,17 +1,17 @@
 'use client'
 import { useAgiliza } from "@/context/AgilizaContext";
 import styles from '@/app/page.module.css';
-import { useRouter } from "next/navigation"; // Pra poder navegar pro Perfil
+import { useRouter } from "next/navigation";
 
 export default function Checkout({ aoFechar }) {
-    // Puxamos o salvarPedido que criamos no Contexto
-    const { carrinho, usuario, removerDoCarrinho, salvarPedido } = useAgiliza();
+    // Puxamos também o atualizarPagamento que idealizamos
+    const { carrinho, usuario, removerDoCarrinho, salvarPedido, atualizarPagamento } = useAgiliza();
     const router = useRouter();
     
     const total = carrinho.reduce((acc, item) => acc + item.preco, 0);
 
     const enviarWhatsapp = () => {
-        if (carrinho.length === 0) return alert("O balaio tá vazio, macho!");
+        if (carrinho.length === 0) return alert("O carrinho esta vazio, macho!");
 
         const dataAtual = new Date().toLocaleString('pt-BR');
 
@@ -22,11 +22,20 @@ export default function Checkout({ aoFechar }) {
             total: total
         });
 
-        // 2. Monta a mensagem pro Zap
+        // 2. Monta a mensagem pro Zap (Com Telefone e Pagamento corrigido)
         const itensMsg = carrinho.map(i => `- ${i.nome} (R$ ${i.preco.toFixed(2)})`).join('%0A');
-        const mensagem = `*Novo Pedido - Agiliza*%0A%0A*Cliente:* ${usuario.nome}%0A*Endereço:* ${usuario.endereco}%0A*Ref:* ${usuario.referencia}%0A*Pagamento:* ${usuario.pagamento}%0A%0A*Itens:*%0A${itensMsg}%0A%0A*Total: R$ ${total.toFixed(2)}*`;
         
-        // 3. Abre o Zap e fecha o modal
+        const mensagem = `*Novo Pedido - Agiliza*%0A%0A` +
+            `*Loja:* Varejo São Jorge%0A` + 
+            `*Cliente:* ${usuario.nome}%0A` +
+            `*Contato:* ${usuario.telefone}%0A` + // O número do cliente pro entregador
+            `*Endereço:* ${usuario.endereco}%0A` +
+            `*Ref:* ${usuario.referencia}%0A` +
+            `*Pagamento:* ${usuario.pagamento || 'Pix'}%0A%0A` + // Garante um valor padrão
+            `*Itens:*%0A${itensMsg}%0A%0A` +
+            `*Total: R$ ${total.toFixed(2)}*`;
+        
+        // 3. Abre o Zap e fecha o modal (Número do Varejo São Jorge)
         window.open(`https://wa.me/5521980867488?text=${mensagem}`);
         aoFechar();
     };
@@ -44,7 +53,6 @@ export default function Checkout({ aoFechar }) {
                     <p>{usuario.endereco || "Endereço não informado"} <br/> 
                        <small>({usuario.referencia || "Sem ponto de referência"})</small>
                     </p>
-                    {/* Agora o botão funciona! */}
                     <button 
                         className={styles.btnAlterar} 
                         onClick={() => { router.push('/perfil'); aoFechar(); }}
@@ -71,11 +79,11 @@ export default function Checkout({ aoFechar }) {
                     <select 
                         className={styles.selectPagamento}
                         value={usuario.pagamento}
-                        onChange={(e) => {/* Aqui eu vou criar uma função pra mudar o pagamento no contexto */}}
+                        onChange={(e) => atualizarPagamento(e.target.value)} // SALVA O MÉTODO AQUI!
                     >
-                        <option>Pix</option>
-                        <option>Cartão (Entregador)</option>
-                        <option>Dinheiro</option>
+                        <option value="Pix">Pix</option>
+                        <option value="Cartão (Entregador)">Cartão (Entregador)</option>
+                        <option value="Dinheiro">Dinheiro</option>
                     </select>
                 </section>
 

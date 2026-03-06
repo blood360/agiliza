@@ -39,6 +39,10 @@ export function AgilizaProvider({ children }) {
     setCarrinho(prev => prev.filter(item => item.idUnico !== idUnico));
   };
 
+  const atualizarPagamento = (metodo) => {
+    setUsuario(prev => ({...prev, pagamento: metodo}));
+  }
+
   return (
     <AgilizaContext.Provider value={{ 
       carrinho, 
@@ -47,6 +51,7 @@ export function AgilizaProvider({ children }) {
       removerDoCarrinho, 
       usuario,
       atualizarPerfil,
+      atualizarPagamento,
       pedidos,
       salvarPedido
     }}>
