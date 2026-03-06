@@ -3,7 +3,7 @@ import ListaProdutos from '@/components/ListaProdutos';
 import MenuInferior from '@/components/MenuInferior';
 
 export default function Home() {
-  const nomeDaLoja = "Varejo São Jorge"; // Exemplo de nome da loja, depois vou puxar do banco
+  const nomeDaLoja = "Minha loja pessoal Adriano Santos"; // Exemplo de nome da loja, depois vou puxar do banco
   // Mock de produtos (depois vou bota aqui pra puxar do banco)
   const produtos = [
     { id: 1, nome: "Catuaba Selvagem 1L", preco: 18.00, img: "catuaba-selvagem.jpg" },
