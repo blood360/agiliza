@@ -1,0 +1,73 @@
+.container {
+  padding: 40px 5%;
+  font-family: 'Poppins', sans-serif;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.btnVoltar {
+  color: #666;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.btnNovo {
+  background: #e63946;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.tabelaWrapper {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tabela th, .tabela td {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.tabela th {
+  background: #f8f9fa;
+  color: #666;
+  font-weight: 600;
+}
+
+.badge {
+  background: #fff3f3;
+  color: #e63946;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.acoes button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  margin-right: 10px;
+}
+
+.vazio {
+  padding: 50px;
+  text-align: center;
+  color: #999;
+}

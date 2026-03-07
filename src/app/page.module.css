@@ -365,3 +365,133 @@
     border-radius: 50px;
     font-weight: 300;
 }
+
+.logoExibicao {
+  max-height: 50px;
+  max-width: 150px;
+  object-fit: contain;
+}
+
+.bannerAviso {
+  background-color: #ffcc00;
+  color: #000;
+  padding: 10px 20px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.containerLoja {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #fff;
+}
+
+.btnFlutuanteCarrinho {
+  position: fixed;
+  bottom: 80px; /* Acima do menu inferior */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #28a745; /* Verdim da cor do Zap */
+  color: white;
+  padding: 15px 30px;
+  border-radius: 30px;
+  font-weight: bold;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  z-index: 1001;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: white;
+  padding: 25px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 450px;
+  text-align: left;
+}
+
+.modalContent h3 {
+  margin-bottom: 20px;
+  color: #333;
+  border-bottom: 2px solid #ffcc00;
+  padding-bottom: 10px;
+}
+
+.infoCheckout p {
+  margin: 10px 0;
+  font-size: 1rem;
+}
+
+.campoModal {
+  margin: 15px 0;
+}
+
+.campoModal label {
+  display: block;
+  font-weight: bold;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.campoModal input, .campoModal select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 5px;
+}
+
+.modalBotoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.btnConfirmar {
+  background: #28a745;
+  color: white;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.btnAlterar {
+  background: #f8f9fa;
+  color: #333;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+}
+
+.btnAdicionarMais {
+  background: transparent;
+  color: #e63946;
+  padding: 10px;
+  border: none;
+  font-weight: bold;
+}
