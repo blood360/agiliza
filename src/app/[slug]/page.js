@@ -5,8 +5,10 @@ import styles from '@/app/page.module.css';
 import ListaProdutosGrid from '@/components/ListaProdutosGrid';
 import MenuInferior from '@/components/MenuInferior';
 import BotaoCompartilhar from '@/components/BotaoCompartilhar';
+import { useAgiliza } from "@/context/AgilizaContext";
 
 export default function HomeLoja() {
+  const { usuario } = useAgiliza();
   const params = useParams();
   const slug = params?.slug;
   
@@ -20,6 +22,15 @@ export default function HomeLoja() {
 
   // 1. Carrega as configurações, perfil e status da loja
   useEffect(() => {
+    if (usuario && usuario.endereco) {
+      setClientePerfil({
+        endereco: usuario.endereco,
+        telefone: usuario.telefone,
+        pagamento: 'PIX'
+      });
+    }
+  }, [usuario]);
+  
     if (typeof window !== 'undefined') {
       const lojaSalva = localStorage.getItem('agiliza_config_loja');
       const perfilSalvo = localStorage.getItem('agiliza_cliente_perfil');
