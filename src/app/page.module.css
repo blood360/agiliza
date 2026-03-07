@@ -495,3 +495,39 @@
   border: none;
   font-weight: bold;
 }
+
+.containerLoja {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+
+.bannerAviso {
+  background-color: #ffcc00;
+  color: #000;
+  padding: 12px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.headerLoja {
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+.btnLojaFechada {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  background-color: #666; color: #ccc; padding: 15px 30px;
+  border-radius: 30px; font-weight: bold; border: none; cursor: not-allowed;
+  z-index: 1001; width: 90%; max-width: 400px;
+}

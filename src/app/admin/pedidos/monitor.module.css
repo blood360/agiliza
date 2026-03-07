@@ -1,0 +1,76 @@
+.gestorContainer {
+  display: flex;
+  min-height: 100vh;
+  background: #f7f8f9;
+  font-family: 'Inter', sans-serif;
+}
+
+.sidebar {
+  width: 240px;
+  background: #1a1a1a;
+  color: white;
+  padding: 30px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.logoArea { padding: 0 30px 40px; }
+.logoArea h2 { color: #ea1d2c; margin-bottom: 5px; } /* Vermelho iFood Style */
+.navLinks { display: flex; flex-direction: column; }
+.navItem { 
+  padding: 15px 30px; 
+  color: #bbb; 
+  text-decoration: none; 
+  transition: 0.3s;
+}
+.navItem:hover, .active { background: #333; color: white; border-left: 4px solid #ea1d2c; }
+
+.conteudoPrincipal { flex: 1; padding: 40px; }
+.topoGestor { margin-bottom: 30px; }
+.badgeOnline { color: #28a745; font-size: 0.9rem; font-weight: bold; }
+
+.abasStatus { 
+  display: flex; 
+  gap: 10px; 
+  margin-bottom: 25px; 
+  border-bottom: 1px solid #ddd; 
+}
+.abasStatus button { 
+  background: none; border: none; padding: 15px 20px; cursor: pointer; font-weight: 600; color: #666; 
+}
+.abaAtiva { color: #ea1d2c !important; border-bottom: 3px solid #ea1d2c; }
+
+/* Estilo do Card de Pedido - Inspirado na lista do iFood */
+.cardiFood {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid #eee;
+}
+
+.cardEsquerda { width: 100px; display: flex; flex-direction: column; border-right: 1px solid #eee; }
+.horaPedido { font-weight: bold; color: #333; }
+.idPedido { font-size: 0.8rem; color: #999; }
+
+.cardMeio { flex: 1; padding: 0 30px; }
+.enderecoResumo { font-size: 0.9rem; color: #666; margin: 5px 0; }
+.itensResumo { font-size: 0.85rem; color: #ea1d2c; font-weight: 500; }
+
+.cardDireita { text-align: right; display: flex; flex-direction: column; gap: 5px; }
+.valorPedido { font-size: 1.1rem; font-weight: bold; }
+.metodoPagamento { font-size: 0.8rem; background: #f0f0f0; padding: 2px 8px; border-radius: 4px; }
+
+.btnAceitar { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+.btnDespachar { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+
+.controleLoja { display: flex; align-items: center; gap: 15px; }
+.txtAberto { color: #28a745; font-weight: bold; }
+.txtFechado { color: #ea1d2c; font-weight: bold; }
+.btnSwitch { 
+  background: #333; color: white; border: none; padding: 10px 15px; 
+  border-radius: 8px; cursor: pointer; font-weight: 600;
+}
