@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image';
 import Link from 'next/link';
 import styles from './landing.module.css';
 import { useState } from 'react';
@@ -27,42 +28,16 @@ export default function Landing() {
             <header className={styles.header}>
                 <div className={styles.logoContainer}>
                     <h1 className={styles.logo}>Agiliza</h1>
-                    
-                    {/* SVG do Motoboy - Agora sem atropelamento! */}
-                    <svg 
-                        width="45" 
-                        height="45" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="1.8" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        className={styles.iconMotoboy}
-                    >
-                        {/* Rodas (Mais juntas para parecer uma moto real) */}
-                        <circle cx="8" cy="19" r="2.5" />
-                        <circle cx="17" cy="19" r="2.5" />
-                        
-                        {/* Corpo da Moto/Scooter (Conectando as partes) */}
-                        <path d="M8 18h9" /> {/* Base */}
-                        <path d="M17 18l1.5-6h-3.5" /> {/* Frente/Guidão */}
-                        <path d="M10 18l1-7h4" /> {/* Assento */}
-
-                        {/* O Baú de entrega (Bem encaixado atrás) */}
-                        <rect x="4" y="10" width="5" height="5" rx="1" />
-                        
-                        {/* O Piloto (Inclinado de forma natural) */}
-                        <path d="M11 11l2-4h3" /> {/* Tronco e braço no guidão */}
-                        
-                        {/* Capacete (Agora grudado no corpo) */}
-                        <circle cx="15" cy="4.5" r="2" /> 
-                        <path d="M14.5 5h1.5" /> {/* Detalhe da viseira */}
-
-                        {/* Linhas de Velocidade (Saindo de trás do baú) */}
-                        <line x1="1" y1="11" x2="3" y2="11" />
-                        <line x1="0" y1="14" x2="2" y2="14" />
-                    </svg>
+                    <div claasName={styles.motoWrapper}>
+                        <Image 
+                            src="/motoagiliza.png"
+                            alt="Moto Agiliza"
+                            width={60}
+                            height={60} 
+                            className={styles.imgMoto}
+                            priority
+                        />
+                    </div>
                 </div>
 
                 <nav className={styles.nav}>

@@ -1,6 +1,6 @@
 'use client'
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react'; // Importamos o Suspense
+import { Suspense } from 'react';
 import styles from './checkout.module.css';
 import Link from 'next/link';
 

@@ -1,146 +1,166 @@
 'use client'
 import { useState, useEffect } from 'react';
-import styles from './monitor.module.css';
+import styles from '../admin.module.css';
 import Link from 'next/link';
+import Image from 'next/image';
 
-export default function MonitorPedidos() {
-  const [lojaAberta, setLojaAberta] = useState(true);
+export default function HistoricoPedidos() {
   const [pedidos, setPedidos] = useState([]);
-  const [abaAtiva, setAbaAtiva] = useState('Pendente');
+  const [filtro, setFiltro] = useState('Todos');
+  const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    // 1. Carrega o status da loja (Aberto/Fechado)
-    const statusSalvo = localStorage.getItem('agiliza_loja_aberta');
-    setLojaAberta(statusSalvo !== 'false');
-
-    const carregarEChecar = () => {
+    const carregar = () => {
       const atuais = JSON.parse(localStorage.getItem('agiliza_pedidos') || '[]');
-      
-      // 2. Lógica do "Ding!" se houver pedido novo enquanto a página está aberta
-      if (atuais.length > pedidos.length && atuais.some(p => p.status === 'Pendente')) {
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        audio.play().catch(() => {
-          console.log("Macho, clica na tela pro som funcionar!");
-        });
-      }
       setPedidos(atuais);
     };
+    carregar();
+  }, []);
 
-    carregarEChecar();
-    const intervalo = setInterval(carregarEChecar, 5000); // Pooling de 5 segundos
-    return () => clearInterval(intervalo);
-  }, [pedidos.length]);
-
-  // Função para abrir e fechar a loja
-  const toggleLoja = () => {
-    const novoStatus = !lojaAberta;
-    setLojaAberta(novoStatus);
-    localStorage.setItem('agiliza_loja_aberta', novoStatus.toString());
+  // 📥 Função para exportar o relatório
+  const exportarRelatorio = () => {
+    const cabecalho = "ID,Data,Cliente,Total,Status\n";
+    const dados = pedidos.map(p => 
+      `${p.id},${new Date(p.id).toLocaleDateString()},${p.cliente.telefone},${p.total},${p.status}`
+    ).join("\n");
+    
+    const blob = new Blob([cabecalho + dados], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `relatorio_agiliza_${new Date().toLocaleDateString()}.csv`;
+    a.click();
+    alert("Relatório gerado com sucesso, meu patrão!");
   };
 
-  const mudarStatus = (id, novoStatus) => {
-    const atualizados = pedidos.map(p => p.id === id ? { ...p, status: novoStatus } : p);
-    setPedidos(atualizados);
-    localStorage.setItem('agiliza_pedidos', JSON.stringify(atualizados));
+  const abrirDetalhes = (pedido) => {
+    setPedidoSelecionado(pedido);
+    setIsModalOpen(true);
   };
 
-  const pedidosFiltrados = pedidos.filter(p => p.status === abaAtiva);
+  const fecharModal = () => {
+    setIsModalOpen(false);
+    setPedidoSelecionado(null);
+  };
+
+  const pedidosFiltrados = filtro === 'Todos' 
+    ? pedidos 
+    : pedidos.filter(p => p.status === filtro);
 
   return (
-    <div className={styles.gestorContainer}>
-      {/* Sidebar de Navegação - Estilo iFood */}
+    <div className={styles.dashboardWrapper}>
       <aside className={styles.sidebar}>
-        <div className={styles.logoArea}>
-          <h2>AS</h2>
-          <span>Agiliza</span>
+        <div className={styles.brandArea}>
+          <h2>AS <span>Agiliza</span></h2>
         </div>
-        <nav className={styles.navLinks}>
-          <Link href="/admin" className={styles.navItem}>📊 Resumo</Link>
+        <nav className={styles.navMenu}>
+          <Link href="/admin" className={styles.navItem}>📊 Dashboard</Link>
           <Link href="/admin/pedidos" className={`${styles.navItem} ${styles.active}`}>🛒 Pedidos</Link>
-          <Link href="/admin/produtos" className={styles.navItem}>🍔 Cardápio</Link>
-          <Link href="/admin/perfil" className={styles.navItem}>⚙️ Configuração</Link>
+          <Link href="/admin/produtos" className={styles.navItem}>🍔 Meu Cardápio</Link>
+          <Link href="/admin/perfil" className={styles.navItem}>⚙️ Configurações</Link>
         </nav>
+        <div className={styles.upgradeBox}>
+          <Image src="/logoAS.png" alt="Logo AS" width={100} height={35} className={styles.logoSidebar} priority />
+        </div>
       </aside>
 
-      <main className={styles.conteudoPrincipal}>
-        <header className={styles.topoGestor}>
-          <div className={styles.infoLoja}>
-            <h1>Gestor de Pedidos</h1>
-            <div className={styles.statusLive}>
-              <span className={lojaAberta ? styles.badgeOnline : styles.badgeOffline}>
-                ● {lojaAberta ? 'LOJA ABERTA' : 'LOJA FECHADA'}
-              </span>
-            </div>
+      <main className={styles.mainContent}>
+        <header className={styles.mainHeader}>
+          <div className={styles.welcomeText}>
+            <h1>Pedidos 🛒</h1>
+            <p>Gerencie o histórico e exporte seus resultados.</p>
           </div>
-
-          {/* Botão de Controle de Funcionamento (O disjuntor!) */}
-          <div className={styles.controleAbertura}>
-            <button 
-              onClick={toggleLoja} 
-              className={lojaAberta ? styles.btnPausar : styles.btnAbrir}
-            >
-              {lojaAberta ? '⏸️ Pausar Vendas' : '▶️ Abrir Loja'}
-            </button>
-          </div>
+          {/* BOTÃO DE EXPORTAR VOLTOU! */}
+          <button onClick={exportarRelatorio} className={styles.btnExportar}>
+            📥 Exportar Relatório (CSV)
+          </button>
         </header>
 
-        {/* Abas de Navegação de Status */}
-        <div className={styles.abasStatus}>
-          <button onClick={() => setAbaAtiva('Pendente')} className={abaAtiva === 'Pendente' ? styles.abaAtiva : ''}>
-            Novos ({pedidos.filter(p => p.status === 'Pendente').length})
-          </button>
-          <button onClick={() => setAbaAtiva('Preparando')} className={abaAtiva === 'Preparando' ? styles.abaAtiva : ''}>
-            Em Preparo ({pedidos.filter(p => p.status === 'Preparando').length})
-          </button>
-          <button onClick={() => setAbaAtiva('Entregue')} className={abaAtiva === 'Entregue' ? styles.abaAtiva : ''}>
-            Concluídos ({pedidos.filter(p => p.status === 'Entregue').length})
-          </button>
-        </div>
+        {/* BOTÕES DE FILTRO VOLTARAM! */}
+        <section className={styles.filterBar}>
+          {['Todos', 'Pendente', 'Preparando', 'Entregue'].map(f => (
+            <button 
+              key={f} 
+              onClick={() => setFiltro(f)}
+              className={filtro === f ? styles.filterActive : styles.filterBtn}
+            >
+              {f}
+            </button>
+          ))}
+        </section>
 
-        <div className={styles.listaPedidos}>
-          {pedidosFiltrados.length > 0 ? pedidosFiltrados.map((pedido) => (
-            <div key={pedido.id} className={styles.cardiFood}>
-              <div className={styles.cardEsquerda}>
-                <span className={styles.horaPedido}>
-                  {new Date(pedido.id).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                </span>
-                <span className={styles.idPedido}>#{pedido.id.toString().slice(-4)}</span>
-              </div>
-              
-              <div className={styles.cardMeio}>
-                <h3>{pedido.cliente.telefone}</h3>
-                <p className={styles.enderecoResumo}>{pedido.cliente.endereco}</p>
-                <div className={styles.itensResumo}>
-                  {pedido.itens.map((it, i) => (
-                    <span key={i}>{it.nome}{i < pedido.itens.length - 1 ? ', ' : ''}</span>
-                  ))}
-                </div>
-              </div>
+        <section className={styles.tableSection}>
+          <table className={styles.tabelaAgiliza}>
+            <thead>
+              <tr>
+                <th>Pedido</th>
+                <th>Data</th>
+                <th>Cliente</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pedidosFiltrados.length > 0 ? pedidosFiltrados.map((p) => (
+                <tr key={p.id}>
+                  <td><strong>#{p.id.toString().slice(-4)}</strong></td>
+                  <td>{new Date(p.id).toLocaleDateString()}</td>
+                  <td>{p.cliente.telefone}</td>
+                  <td className={styles.txtPreco}>R$ {p.total.toFixed(2)}</td>
+                  <td><span className={`${styles.badgeStatus} ${styles[p.status.toLowerCase()]}`}>{p.status}</span></td>
+                  <td>
+                    <button onClick={() => abrirDetalhes(p)} className={styles.btnVerMais}>
+                      Ver Detalhes
+                    </button>
+                  </td>
+                </tr>
+              )) : (
+                <tr><td colSpan="6" className={styles.tdVazio}>Nenhum pedido encontrado.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </section>
 
-              <div className={styles.cardDireita}>
-                <span className={styles.valorPedido}>R$ {pedido.total.toFixed(2)}</span>
-                <span className={styles.metodoPagamento}>{pedido.cliente.pagamento}</span>
-                
-                <div className={styles.botoesAcao}>
-                  {pedido.status === 'Pendente' && (
-                    <button onClick={() => mudarStatus(pedido.id, 'Preparando')} className={styles.btnAceitar}>
-                      ACEITAR
-                    </button>
-                  )}
-                  {pedido.status === 'Preparando' && (
-                    <button onClick={() => mudarStatus(pedido.id, 'Entregue')} className={styles.btnDespachar}>
-                      DESPACHAR
-                    </button>
-                  )}
-                </div>
+        {/* MODAL DE DETALHES */}
+        {isModalOpen && pedidoSelecionado && (
+          <div className={styles.modalOverlay} onClick={fecharModal}>
+            <div className={styles.modalDetalhes} onClick={e => e.stopPropagation()}>
+              <header className={styles.modalHeader}>
+                <h2>Detalhes #{pedidoSelecionado.id.toString().slice(-4)}</h2>
+                <button onClick={fecharModal} className={styles.btnClose}>&times;</button>
+              </header>
+              <div className={styles.modalBody}>
+                <section className={styles.infoBloco}>
+                  <h3>📍 Entrega</h3>
+                  <p><strong>Cliente:</strong> {pedidoSelecionado.cliente.telefone}</p>
+                  <p><strong>Endereço:</strong> {pedidoSelecionado.cliente.endereco}</p>
+                  <p><strong>Pagamento:</strong> {pedidoSelecionado.cliente.pagamento}</p>
+                </section>
+                <section className={styles.infoBloco}>
+                  <h3>🍔 Itens</h3>
+                  <div className={styles.listaItensModal}>
+                    {pedidoSelecionado.itens.map((item, index) => (
+                      <div key={index} className={styles.itemLinha}>
+                        <span>1x {item.nome}</span>
+                        <span>R$ {item.preco.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={styles.totalModal}>
+                    <strong>Total:</strong>
+                    <strong>R$ {pedidoSelecionado.total.toFixed(2)}</strong>
+                  </div>
+                </section>
               </div>
+              <footer className={styles.modalFooter}>
+                <button onClick={() => window.print()} className={styles.btnImprimir}>🖨️ Imprimir</button>
+                <button onClick={fecharModal} className={styles.btnFecharModal}>Fechar</button>
+              </footer>
             </div>
-          )) : (
-            <div className={styles.vazioEstado}>
-              <p>Nenhum pedido na aba <strong>{abaAtiva}</strong></p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
     </div>
   );

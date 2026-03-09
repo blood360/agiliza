@@ -121,9 +121,13 @@
 }
 
 .planoCard {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Isso empurra o que for possível pras pontas */
+    height: 100%; /* Garante que todos tenham o mesmo tamanho */
+    padding: 30px;
     background: #e0dddd;
     border: 1px solid #ccc;
-    padding: 40px;
     border-radius: 24px;
     width: 300px;
     position: relative;
@@ -147,13 +151,14 @@
 
 .btnPlano {
     width: 100%;
-    padding: 15px;
+    padding: 12px;
     border-radius: 12px;
     border: none;
     background: var(--primary);
     color: #fff;
     font-weight: bold;
-    margin-top: 20px;
+    margin-top: auto;
+    cursor: pointer;
 }
 
 .destaque .btnPlano {
@@ -172,7 +177,7 @@
   display: flex;
   gap: 10px;
   justify-content: center;
-  flex-wrap: wrap; /* Pra não quebrar no celular */
+  flex-wrap: wrap;
 }
 
 .inputTeste {
@@ -196,7 +201,6 @@
   }
 }
 
-/* Container que segura o ícone e o nome */
 .logoContainer {
     display: flex;
     align-items: center;
@@ -218,7 +222,6 @@
     align-items: center;
 }
 
-/* O estilo que estava faltando pro link de Planos */
 .navLink {
     text-decoration: none;
     color: #444;

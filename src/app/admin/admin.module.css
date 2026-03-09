@@ -1,47 +1,444 @@
-.container {
-  padding: 40px 10%;
-  font-family: 'Poppins', sans-serif;
-  background: #fdfdfd;
+.dashboardWrapper {
+  display: flex;
   min-height: 100vh;
+  background: #f4f7f9;
+  font-family: 'Inter', sans-serif;
 }
 
-.header h1 {
-  font-size: 2rem;
-  color: #333;
+/* Sidebar Estilo SaaS Moderno */
+.sidebar {
+  width: 260px;
+  background: #121212;
+  color: white;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
 }
 
-.gridResumo {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin: 30px 0;
-}
+.brandArea h2 { font-size: 1.5rem; margin-bottom: 50px; }
+.brandArea h2 span { color: #ea1d2c; }
 
-.cardInfo {
-  background: #fff;
-  padding: 20px;
+.navMenu { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.navItem {
+  padding: 14px 18px;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  border-left: 5px solid #e63946;
+  color: #888;
+  text-decoration: none;
+  font-weight: 500;
+  transition: 0.3s;
+}
+.navItem:hover, .active { background: #ea1d2c; color: white; }
+
+.upgradeBox {
+  background: transparent; /* Removemos o fundo preto/cinza chamativo */
+  padding: 10px;
+  margin-top: auto; /* Mantém ela lá embaixo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-top: 1px solid #222; /* Uma linha bem fininha só pra separar */
 }
 
-.btnAcao {
-  display: inline-block;
-  background: #e63946;
-  color: #fff;
-  padding: 15px 25px;
-  border-radius: 10px;
-  text-decoration: none;
-  font-weight: bold;
-  margin-right: 15px;
+.logoSidebar {
+  max-width: 100px; /* Garante que ela nunca cresça demais */
+  height: auto;
+  opacity: 0.4; /* Deixa ela "apagadinha" pra ser discreta */
+  transition: opacity 0.3s ease; /* Efeito suave ao passar o mouse */
+  filter: grayscale(100%); /* Deixa ela cinza pra harmonizar com o menu */
 }
 
-.btnAcaoSecundario {
-  display: inline-block;
-  background: #eee;
-  color: #333;
+/* Quando o lojista passar o mouse, a logo ganha vida */
+.upgradeBox:hover .logoSidebar {
+  opacity: 1;
+  filter: grayscale(0%); /* Volta a cor original no hover */
+}
+
+.logoSidebar {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain; /* Garante que a logo não distorça */
+}
+
+/* Área de Conteúdo Principal */
+.mainContent { margin-left: 260px; flex: 1; padding: 40px; }
+
+.mainHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.welcomeText h1 { font-size: 1.8rem; color: #1a1a1a; }
+.welcomeText p { color: #666; margin-top: 5px; }
+
+.lojaStatusCard {
+  background: white;
   padding: 15px 25px;
-  border-radius: 10px;
-  text-decoration: none;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.btnToggle {
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Bento Grid de Estatísticas */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.statCard {
+  background: white;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.statLabel { color: #777; font-size: 0.9rem; }
+.statValue { font-size: 2rem; font-weight: 800; margin: 10px 0; color: #1a1a1a; }
+.alert { color: #ea1d2c; }
+.statSub { font-size: 0.8rem; color: #999; }
+
+/* Seção de Pedidos Integrada */
+.ordersSection {
+  background: white;
+  border-radius: 25px;
+  padding: 30px;
+  box-shadow: 0 4px 25px rgba(0,0,0,0.04);
+}
+
+.ordersHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.tabs { display: flex; gap: 10px; }
+.tabs button {
+  background: #f0f2f5;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  color: #666;
   font-weight: 600;
+}
+.tabActive { background: #ea1d2c !important; color: white !important; }
+
+/* Lista de Pedidos em Cards */
+.ordersContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.orderCard {
+  border: 1px solid #eee;
+  border-radius: 15px;
+  padding: 20px;
+  transition: 0.3s;
+}
+.orderCard:hover { border-color: #ea1d2c; transform: translateY(-3px); }
+
+.orderHead { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #f9f9f9; padding-bottom: 10px; }
+.phone { font-weight: bold; color: #333; }
+.address { font-size: 0.85rem; color: #777; margin: 8px 0; }
+.itemsList { font-size: 0.8rem; color: #ea1d2c; font-weight: 500; }
+
+.orderFooter { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+.totalValue { font-size: 1.1rem; font-weight: bold; }
+
+.btnAceitar { background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+.btnDespachar { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+@media (max-width: 1024px) {
+  .sidebar { display: none; }
+  .mainContent { margin-left: 0; padding: 20px; }
+  .statsGrid { grid-template-columns: 1fr; }
+}
+
+/* Container do Formulário - Mais estreito e elegante */
+.formContainer {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  max-width: 700px; /* Não deixa o formulário espalhar na tela toda */
+}
+
+.row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: flex-end; /* Alinha o input com a caixa de foto */
+}
+
+.campoForm {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campoForm label { font-size: 0.9rem; font-weight: 600; color: #444; }
+
+.campoForm input, .campoForm select, .campoForm textarea {
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  background: #f9f9f9;
+  outline: none;
+}
+
+/* O BOX DA IMAGEM DISCRETO */
+.uploadDiscreto {
+  width: 80px;
+  height: 80px;
+}
+
+.labelUpload {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: 0.3s;
+}
+
+.labelUpload:hover { border-color: #ea1d2c; background: #fff5f5; }
+
+.placeholderFoto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #aaa;
+}
+
+.previewMini {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Faz a foto preencher o quadradinho sem distorcer */
+}
+
+.btnConfirmarForm {
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 12px;
+  width: 100%;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* Botão de Exportar */
+.btnExportar {
+  background: #ea1d2c;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(234, 29, 44, 0.2);
+}
+
+/* Tabela SaaS */
+.tableSection {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  overflow-x: auto;
+}
+
+.tabelaAgiliza {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tabelaAgiliza th {
+  padding: 15px;
+  border-bottom: 2px solid #f4f7f9;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.tabelaAgiliza td {
+  padding: 15px;
+  border-bottom: 1px solid #f4f7f9;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.badgeStatus {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.pendente { background: #fff5f5; color: #ea1d2c; }
+.preparando { background: #fff9e6; color: #f39c12; }
+.entregue { background: #f0fff4; color: #28a745; }
+
+.btnVerMais {
+  background: #f0f2f5;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btnVerMais:hover { background: #e2e5e9; }
+
+/* Overlay que escurece o fundo */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px); /* Charme de sistema moderno */
+}
+
+/* Caixa do Modal */
+.modalDetalhes {
+  background: white;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.btnClose { background: none; border: none; font-size: 2rem; cursor: pointer; color: #999; }
+
+.infoBloco { margin-bottom: 25px; }
+.infoBloco h3 { font-size: 1rem; color: #ea1d2c; margin-bottom: 10px; }
+.infoBloco p { font-size: 0.95rem; color: #555; margin: 5px 0; }
+
+.itemLinha {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed #eee;
+  font-size: 0.95rem;
+}
+
+.totalModal {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+  font-size: 1.2rem;
+  color: #1a1a1a;
+}
+
+.modalFooter {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btnImprimir {
+  flex: 1;
+  background: #f0f2f5;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btnFecharModal {
+  flex: 1;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Container que segura os botões de filtro */
+.filterBar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 25px;
+  flex-wrap: wrap; /* Garante que não quebre no celular */
+}
+
+/* Estilo do botão quando NÃO está selecionado */
+.filterBtn {
+  background: #fff;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 10px 20px;
+  border-radius: 30px; /* Deixa ele redondinho e moderno */
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.filterBtn:hover {
+  background: #f0f2f5;
+  border-color: #ccc;
+}
+
+/* Estilo do botão quando ESTÁ ATIVO (Selecionado) */
+.filterActive {
+  background: #ea1d2c; /* Vermelho padrão da AS Agiliza */
+  color: #fff;
+  border: 1px solid #ea1d2c;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(234, 29, 44, 0.2); /* Sombra leve pra dar profundidade */
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
 }
