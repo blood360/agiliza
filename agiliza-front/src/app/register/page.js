@@ -3,36 +3,44 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './register.module.css';
+import { useNotify } from '@/context/ToastContext'; // Importando seu sistema de avisos
+import API_URL from '@/config/api'; // Importando o GPS do backend
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ nome: '', email: '', senha: '', telefone: '', tipo: 'cliente' });
   const [carregando, setCarregando] = useState(false);
   const router = useRouter();
+  const notify = useNotify(); // Inicializando o notify
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setCarregando(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/usuarios/registrar', {
+      // MUDANÇA AQUI: Trocamos o localhost pela variável API_URL
+      const response = await fetch(`${API_URL}/api/usuarios/registrar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
 
+      const data = await response.json();
+
       if (response.ok) {
+        // Trocamos o alert pelo seu notify profissional
+        notify("Cadastro realizado com sucesso! Bem-vindo ao Agiliza. 🚀", "success");
+        
         setTimeout(() => {
-          alert("Cadastro realizado com sucesso! Bem-vindo ao Agiliza.");
           router.push('/login');
         }, 2000);
       } else {
         setCarregando(false);
-        const data = await response.json();
-        alert(data.erro || "Erro ao realizar cadastro.");
+        notify(data.erro || "Vixe! Erro ao realizar cadastro.", "error");
       }
     } catch (err) {
       setCarregando(false);
-      console.error("Erro de conexão.");
+      console.error("Erro de conexão:", err);
+      notify("Erro ao conectar com o servidor. Verifique o backend no Render.", "error");
     }
   };
 
@@ -56,24 +64,28 @@ export default function RegisterPage() {
         <input 
           type="text" 
           placeholder="Nome completo" 
+          value={form.nome}
           onChange={(e) => setForm({...form, nome: e.target.value})} 
           required 
         />
         <input 
           type="email" 
           placeholder="Seu melhor e-mail" 
+          value={form.email}
           onChange={(e) => setForm({...form, email: e.target.value})} 
           required 
         />
         <input 
           type="tel" 
           placeholder="WhatsApp (com DDD)" 
+          value={form.telefone}
           onChange={(e) => setForm({...form, telefone: e.target.value})} 
           required 
         />
         <input 
           type="password" 
           placeholder="Crie uma senha" 
+          value={form.senha}
           onChange={(e) => setForm({...form, senha: e.target.value})} 
           required 
         />
