@@ -114,7 +114,7 @@ export default function HomeLoja() {
       {/* Usando a função onAdd que vem do Contexto agora */}
       <ListaProdutosGrid produtos={produtos} onAdd={adicionarAoCarrinho} />
 
-      {carrinho.length > 0 && (
+      {carrinho.length > 0 && !isModalOpen && (
         <button onClick={abrirCheckout} className={styles.btnFlutuanteCarrinho}>
           🛒 Ver Carrinho (R$ {totalPedido.toFixed(2)})
         </button>

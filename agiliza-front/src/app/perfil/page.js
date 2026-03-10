@@ -40,7 +40,6 @@ export default function PerfilPage() {
     const token = localStorage.getItem('agiliza_token');
 
     try {
-      // Bate na rota PUT que você me mostrou!
       const res = await fetch(`${API_URL}/api/usuarios/perfil`, {
         method: 'PUT',
         headers: { 
@@ -56,17 +55,25 @@ export default function PerfilPage() {
       });
 
       if (res.ok) {
+        // 1. Pega os dados que o servidor acabou de salvar
+        const dadosAtualizados = await res.json();
+        
+        setUsuario(dadosAtualizados); 
+
+        // 3. Atualiza o backup no localStorage
+        localStorage.setItem('@Agiliza:Perfil', JSON.stringify(dadosAtualizados));
+
         notify("Perfil atualizado com sucesso! 🚀", "success");
         setEditando(false);
       } else {
-        notify("Vixe! Não consegui salvar.", "error");
+        notify("Vixe! Não consegui salvar no servidor.", "error");
       }
     } catch (err) {
       notify("Erro de conexão com a AS Automações.", "error");
     } finally {
       setSalvando(false);
     }
-  };
+};
 
   if (carregando) {
     return (
