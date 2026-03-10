@@ -631,3 +631,79 @@
     gap: 10px;
   }
 }
+
+/* Fundo escuro atrás do modal */
+.modalCheckout {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Escurece o fundo */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 20px;
+}
+
+/* Caixa do Modal branca e elegante */
+.conteudoCheckout {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  border-radius: 20px;
+  overflow-y: auto;
+  padding: 25px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.headerCheckout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.sessaoCheckout {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 12px;
+}
+
+.btnAlterar {
+  background: #1e293b;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.selectPagamento {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-top: 10px;
+  font-size: 1rem;
+}
+
+.btnFinalizar {
+  width: 100%;
+  background-color: #16a34a; /* Verde sucesso */
+  color: white;
+  border: none;
+  padding: 18px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 15px;
+}

@@ -7,6 +7,7 @@ import MenuInferior from '@/components/MenuInferior';
 import BotaoCompartilhar from '@/components/BotaoCompartilhar';
 import { useAgiliza } from "@/context/AgilizaContext";
 import { useNotify } from '@/context/ToastContext';
+import Checkout from '@components/Checkout';
 
 export default function HomeLoja() {
   const { usuario } = useAgiliza(); 
@@ -164,14 +165,7 @@ export default function HomeLoja() {
 
       {/* MODAL DE CHECKOUT */}
       {isModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h3>Finalizar Pedido</h3>
-            <p><strong>Total:</strong> R$ {totalPedido.toFixed(2)}</p>
-            <button onClick={confirmarVenda} className={styles.btnConfirmar}>Confirmar e Enviar Zap ✅</button>
-            <button onClick={() => setIsModalOpen(false)} className={styles.btnAdicionarMais}>Voltar</button>
-          </div>
-        </div>
+        <Checkout aoFechar={() => setIsModalOpen(false)} />
       )}
       <MenuInferior />
     </main>
