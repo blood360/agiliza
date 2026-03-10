@@ -1,0 +1,163 @@
+/* --- ESTRUTURA GERAL --- */
+.masterWrapper { 
+  display: flex; 
+  min-height: 100vh; 
+  background: #f8f9fc; 
+  font-family: 'Inter', sans-serif; 
+}
+
+.sidebarMaster {
+  width: 240px; 
+  background: #0f172a; 
+  color: white;
+  padding: 40px 20px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 40px;
+  position: fixed; 
+  height: 100vh;
+}
+
+.mainMaster { 
+  flex: 1; 
+  padding: 40px; 
+  margin-left: 240px; 
+}
+
+.headerMaster { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 30px; 
+}
+
+/* --- LOGO E NAV --- */
+.logoMaster {
+  max-width: 150px;
+  height: auto !important;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.navMaster { display: flex; flex-direction: column; gap: 8px; }
+.navMaster button {
+  background: none; border: none; color: #94a3b8; padding: 12px;
+  text-align: left; cursor: pointer; border-radius: 12px; font-weight: 600;
+  transition: 0.3s;
+}
+.navMaster button.active { background: #1e293b; color: #38bdf8; }
+
+/* --- BOTÃO CADASTRAR (O QUE TINHA SUMIDO!) --- */
+.btnNovoAcesso {
+  background: #38bdf8; 
+  color: white; 
+  border: none; 
+  padding: 14px 28px;
+  border-radius: 12px; 
+  font-weight: 800; 
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+  transition: transform 0.2s;
+}
+
+.btnNovoAcesso:hover { transform: scale(1.05); background: #0ea5e9; }
+
+/* --- CARDS DE RESUMO DO TOPO --- */
+.cardsMaster { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+.cardM { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+.cardM span { color: #64748b; font-size: 0.9rem; font-weight: 600; }
+.cardM h2 { font-size: 1.8rem; margin-top: 10px; color: #1e293b; font-weight: 800; }
+
+/* --- ABA FINANCEIRO (AJUSTADO PARA cardFin) --- */
+.gridFinanceira { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+  gap: 25px; 
+}
+
+.cardFin { 
+  background: white; 
+  padding: 30px; 
+  border-radius: 20px; 
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
+  display: flex;
+  flex-direction: column;
+}
+
+.cardFin h3 { margin-bottom: 20px; color: #1e293b; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+.linhaFin { display: flex; justify-content: space-between; margin: 10px 0; color: #64748b; }
+.divisor { border: 0; border-top: 1px solid #f1f5f9; margin: 15px 0; }
+.totalDestaque { display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; }
+
+/* CORES DE STATUS FINANCEIRO */
+.lucro { border-top: 8px solid #22c55e; }
+.prejuizo { border-top: 8px solid #ef4444; }
+.txtLucro, .txtVerde { color: #22c55e; }
+.txtPrejuizo, .txtAlerta { color: #ef4444; }
+
+/* --- TABELA DE ASSINANTES --- */
+.tabelaContainer { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+.tabelaMaster { width: 100%; border-collapse: collapse; text-align: left; }
+.tabelaMaster th { padding: 15px; border-bottom: 2px solid #f8f9fc; color: #64748b; font-size: 0.85rem; }
+.tabelaMaster td { padding: 15px; border-bottom: 1px solid #f8f9fc; color: #334155; }
+
+.status { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+.ativo { background: #dcfce7; color: #166534; }
+.inadimplente { background: #fee2e2; color: #991b1b; }
+.bloqueado { background: #f1f5f9; color: #475569; }
+.tagPlano { background: #eff6ff; color: #2563eb; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+
+.acoesBtn { display: flex; gap: 8px; }
+.btnBloquear { background: #1e293b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+.btnEditar { background: #f1f5f9; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+
+/* --- MODAL --- */
+.modalOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
+.modalMaster { background: white; padding: 35px; border-radius: 25px; width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.modalMaster input, .modalMaster select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; }
+.modalBotoes { display: flex; gap: 10px; margin-top: 20px; }
+.btnConfirmar { flex: 1; background: #38bdf8; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+.btnCancelar { flex: 1; background: #f1f5f9; border: none; padding: 14px; border-radius: 12px; cursor: pointer; color: #64748b; }
+
+/* No seu master.module.css */
+
+.btnCobrar {
+  background: #fff7ed; /* Um laranjinha bem claro */
+  color: #c2410c;
+  border: 1px solid #fdba74;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: 0.3s;
+}
+
+.btnCobrar:hover {
+  background: #ffedd5;
+  border-color: #f97316;
+}
+
+.btnPago {
+  background: #f0fdf4; /* Verde clarinho */
+  color: #15803d;
+  border: 1px solid #86efac;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: 0.3s;
+}
+
+.btnPago:hover {
+  background: #dcfce7;
+}
+
+/* Garante que o container de ações não quebre */
+.acoesBtn {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

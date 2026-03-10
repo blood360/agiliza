@@ -1,0 +1,249 @@
+.container {
+    background: #fdfdfd;
+    color: #333;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 5%;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.logo {
+    color: var(--primary);
+    font-weight: 900;
+    font-size: 2.4rem;
+    margin: 0;
+    letter-spacing: -1px;
+}
+
+.btnNav {
+    background: var(--primary);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.hero {
+    text-align: center;
+    padding: 80px 10%;
+    background: linear-gradient(180deg, #fff, 0%, #afbbc2 100%);
+}
+
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.hero span {
+    color: var(--primary);
+}
+
+.ctaButtons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.btnPrincipal {
+    background: var(--primary);
+    color: #fff;
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.btnSecundario {
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btnSecundario:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    padding: 60px 10%;
+}
+
+.featureCard {
+    background: #a8a4a4;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.planos {
+    padding: 80px 10%;
+    text-align: center;
+    background-color: #fdfdfd;
+}
+
+.planos h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1d3557;
+    position: relative;
+    display: inline-block;
+}
+
+.planos h2::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: var(--primary);
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+.gridPlanos {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 40px 10%;
+    flex-wrap: wrap;
+}
+
+.planoCard {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Isso empurra o que for possível pras pontas */
+    height: 100%; /* Garante que todos tenham o mesmo tamanho */
+    padding: 30px;
+    background: #e0dddd;
+    border: 1px solid #ccc;
+    border-radius: 24px;
+    width: 300px;
+    position: relative;
+}
+
+.destaque {
+    border: 3px solid var(--primary);
+    transform: scale(1.05);
+}
+
+.preco {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.preco span {
+    font-size: 1rem;
+    color: #888;
+}
+
+.btnPlano {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    font-weight: bold;
+    margin-top: auto;
+    cursor: pointer;
+}
+
+.destaque .btnPlano {
+    background: var(--primary);
+}
+
+.footer {
+    text-align: center;
+    padding: 40px;
+    background: #1d3557;
+    color: #fff;
+}
+
+.formTeste {
+  margin-top: 30px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.inputTeste {
+  padding: 15px 25px;
+  border-radius: 12px;
+  border: 2px solid #ddd;
+  font-size: 1.1rem;
+  width: 100%;
+  max-width: 350px;
+  outline: none;
+}
+
+.inputTeste:focus {
+  border-color: var(--primary);
+}
+
+@media (max-width: 600px) {
+  .formTeste {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.logoContainer {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.iconMotoboy {
+    color: var(--primary);
+    animation: entregaRapida 0.8s infinite alternate ease-in-out;
+}
+
+@keyframes entregaRapida {
+    from { transform: translateX(0) rotate(0deg); }
+    to { transform: translateX(5px) rotate(-3deg); }
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+}
+
+.navLink {
+    text-decoration: none;
+    color: #444;
+    font-weight: 600;
+    margin-right: 30px;
+    transition: color 0.3s;
+}
+
+.navLink:hover {
+    color: var(--primary);
+}
+
+.btnNav {
+    background: var(--primary);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.btnNav:hover {
+    transform: scale(1.05);
+}

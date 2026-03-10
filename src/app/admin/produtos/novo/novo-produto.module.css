@@ -1,0 +1,65 @@
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.header {
+  margin-bottom: 30px;
+}
+
+.voltar {
+  color: #666;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.form {
+  background: #fff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+.campo {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.campo label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.campo input, .campo select, .campo textarea {
+  padding: 12px;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.campo input:focus {
+  border-color: #e63946;
+  outline: none;
+}
+
+.btnSalvar {
+  width: 100%;
+  background: #e63946;
+  color: #fff;
+  border: none;
+  padding: 15px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.btnSalvar:active {
+  transform: scale(0.98);
+}
