@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './login.module.css';
-import { useNotify } from '@/context/ToastContext'; // Usando seu sistema de avisos
+import { useNotify } from '@/context/ToastContext';
+import API_URL from '@/config/api'; // Importando a configuração certa
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,7 +19,8 @@ export default function LoginPage() {
     setCarregando(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/usuarios/login', {
+      // MUDANÇA AQUI: Trocamos o localhost pela variável API_URL
+      const response = await fetch(`${API_URL}/api/usuarios/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, senha })
@@ -27,23 +29,29 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Frase de efeito que você pediu!
+        notify("Seja bem-vindo ao Agiliza - Sua venda na velocidade da luz! 🚀", "success");
+        
+        // Salvando o token e dados se necessário (opcional, mas recomendado)
+        if (data.token) {
+           localStorage.setItem('agiliza_token', data.token);
+        }
+
         setTimeout(() => {
-          // Frase de efeito que você pediu!
-          notify("Seja bem-vindo ao Agiliza - Sua venda na velocidade da luz! 🚀", "success");
-          
           if (data.usuario.tipo === 'lojista') {
             router.push('/as-admin');
           } else {
-            router.push('/explorar'); // Agora essa página vai existir!
+            router.push('/explorar');
           }
-        }, 1200);
+        }, 1500); // Um tempinho pro cabra ler a mensagem de sucesso
       } else {
         setCarregando(false);
         notify(data.erro || "E-mail ou senha incorretos.", "error");
       }
     } catch (err) {
       setCarregando(false);
-      notify("Erro ao conectar com o servidor.", "error");
+      console.error("Erro no login:", err);
+      notify("Erro ao conectar com o servidor. Verifique sua internet.", "error");
     }
   };
 
@@ -67,7 +75,7 @@ export default function LoginPage() {
         <div className={styles.inputGroup}>
           <input 
             type="email" 
-            name="email_agiliza" // Nome único para evitar autofill antigo
+            name="email_agiliza" 
             placeholder="exemplo@email.com" 
             value={email} 
             onChange={(e) => setEmail(e.target.value)} 
