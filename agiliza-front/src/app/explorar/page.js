@@ -2,27 +2,34 @@
 import { useState, useEffect } from 'react';
 import styles from './explorar.module.css';
 import { useNotify } from '@/context/ToastContext';
+import API_URL from '@/config/api';
+import MenuInferior from '@/components/MenuInferior';
 
 export default function ExplorarPage() {
   const [busca, setBusca] = useState('');
   const [lojas, setLojas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
   const notify = useNotify();
 
-  // Busca todas as lojas ativas no início
   useEffect(() => {
     const carregarLojas = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/assinantes');
+        const res = await fetch(`${API_URL}/api/assinantes`);
+        
+        if (!res.ok) throw new Error("Erro ao buscar dados");
+        
         const data = await res.json();
         setLojas(data);
       } catch (err) {
-        notify("Erro ao carregar vitrines.", "error");
+        console.error(err);
+        notify("Desculpe! Não consegui carregar as vitrines.", "error");
+      } finally {
+        setCarregando(false);
       }
     };
     carregarLojas();
-  }, []);
+  }, [notify]);
 
-  // Filtra as lojas pela lupa
   const lojasFiltradas = lojas.filter(loja => 
     loja.loja.toLowerCase().includes(busca.toLowerCase())
   );
@@ -43,7 +50,9 @@ export default function ExplorarPage() {
       </header>
 
       <main className={styles.gridLojas}>
-        {lojasFiltradas.length > 0 ? (
+        {carregando ? (
+          <p className={styles.vazio}>Procurando as melhores lojas... 📦</p>
+        ) : lojasFiltradas.length > 0 ? (
           lojasFiltradas.map(loja => (
             <a href={`/${loja.slug}`} key={loja._id} className={styles.cardLoja}>
               <div className={styles.infoLoja}>
@@ -55,9 +64,11 @@ export default function ExplorarPage() {
             </a>
           ))
         ) : (
-          <p className={styles.vazio}>Vixe, macho! Achei essa loja não. 🌵</p>
+          <p className={styles.vazio}>Desculpe não encontrei essa loja!</p>
         )}
       </main>
+
+      <MenuInferior /> 
     </div>
   );
 }
