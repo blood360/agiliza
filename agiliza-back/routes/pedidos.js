@@ -15,15 +15,13 @@ const auth = async (req, res, next) => {
     }
 };
 
-// --- ROTA QUE BUSCA OS PEDIDOS DO CLIENTE LOGADO ---
 router.get('/meus-pedidos', auth, async (req, res) => {
     try {
-        // Busca pedidos onde o campo 'cliente' (ou clienteId) seja igual ao ID do token
-        const pedidos = await Pedido.find({ cliente: req.usuarioId }).sort({ createdAt: -1 });
-        res.send(pedidos);
-    } catch (e) {
-        res.status(500).send({ erro: "Erro ao buscar seus pedidos." });
+        // Busca pedidos vinculados ao ID do usuário que vem do token (auth middleware)
+        const pedidos = await Pedido.find({ usuarioId: req.usuario.id }).sort({ createdAt: -1 });
+        res.json(pedidos);
+    } catch (err) {
+        res.status(500).json({ erro: "Erro ao buscar pedidos." });
     }
 });
-
 module.exports = router;

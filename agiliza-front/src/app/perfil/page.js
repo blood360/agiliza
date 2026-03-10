@@ -7,13 +7,15 @@ import styles from './perfil.module.css';
 import { useNotify } from '@/context/ToastContext';
 
 export default function PerfilPage() {
-  const [usuario, setUsuario] = useState(null);
+  const [usuario, setUsuario] = useState({ nome: '', email: '', telefone: '', endereco: '', referencia: '' });
+  const [editando, setEditando] = useState(false);
   const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
   const router = useRouter();
   const notify = useNotify();
 
   useEffect(() => {
-    const carregar = async () => {
+    const carregarPerfil = async () => {
       const token = localStorage.getItem('agiliza_token');
       if (!token) return router.push('/login');
 
@@ -22,21 +24,49 @@ export default function PerfilPage() {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        
-        if (res.ok) {
-          setUsuario(data);
-        } else {
-          notify(data.erro || "Sessão expirada. Logue novamente.", "error");
-          router.push('/login');
-        }
+        if (res.ok) setUsuario(data);
       } catch (err) {
-        notify("Não consegui conectar com o servidor da AS.", "error");
+        notify("Erro ao carregar seus dados.", "error");
       } finally {
         setCarregando(false);
       }
     };
-    carregar();
+    carregarPerfil();
   }, [router, notify]);
+
+  const handleSalvar = async (e) => {
+    e.preventDefault();
+    setSalvando(true);
+    const token = localStorage.getItem('agiliza_token');
+
+    try {
+      // Bate na rota PUT que você me mostrou!
+      const res = await fetch(`${API_URL}/api/usuarios/perfil`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            nome: usuario.nome,
+            telefone: usuario.telefone,
+            endereco: usuario.endereco,
+            referencia: usuario.referencia
+        })
+      });
+
+      if (res.ok) {
+        notify("Perfil atualizado com sucesso! 🚀", "success");
+        setEditando(false);
+      } else {
+        notify("Vixe! Não consegui salvar.", "error");
+      }
+    } catch (err) {
+      notify("Erro de conexão com a AS Automações.", "error");
+    } finally {
+      setSalvando(false);
+    }
+  };
 
   if (carregando) {
     return (
@@ -45,7 +75,7 @@ export default function PerfilPage() {
           <img src="/motoagiliza.png" alt="Moto Agiliza" className={styles.loaderImage} />
           <div className={styles.spinnerCircle}></div>
         </div>
-        <p className={styles.loaderText}>Aguarde, estou consultando seus dados...</p>
+        <p className={styles.loaderText}>Consultando seus dados...</p>
       </div>
     );
   }
@@ -54,28 +84,54 @@ export default function PerfilPage() {
     <div className={styles.container}>
       <header className={styles.header}>
         <h1>Meu Perfil</h1>
-        <p className={styles.sub}>Dados da sua conta na AS Automações</p>
       </header>
 
       <main className={styles.perfilContent}>
-        {usuario ? (
-          <div className={styles.infoCards}>
-            <div className={styles.card}><label>👤 Nome Completo</label><p>{usuario.nome}</p></div>
-            <div className={styles.card}><label>📧 E-mail de Acesso</label><p>{usuario.email}</p></div>
-            <div className={styles.card}><label>📱 WhatsApp</label><p>{usuario.telefone || "Não cadastrado"}</p></div>
-            <div className={styles.card}><label>📍 Endereço de Entrega</label><p>{usuario.endereco || "Nenhum endereço salvo"}</p></div>
-            <div className={styles.card}><label>🏷️ Ponto de Referência</label><p>{usuario.referencia || "Não informado"}</p></div>
-            
-            <button className={styles.btnAcao} onClick={() => notify("Função de edição em breve!", "info")}>
-              Editar Meus Dados
-            </button>
+        <form onSubmit={handleSalvar} className={styles.infoCards}>
+          <div className={styles.card}>
+            <label>👤 Nome</label>
+            {editando ? (
+              <input type="text" className={styles.inputEdit} value={usuario.nome} onChange={e => setUsuario({...usuario, nome: e.target.value})} required />
+            ) : <p>{usuario.nome}</p>}
           </div>
-        ) : (
-          <div className={styles.erroBox}>
-            <p>Vixe! Não achei seus dados. Tente logar de novo.</p>
-            <button onClick={() => router.push('/login')} className={styles.btnAcao}>Ir para Login</button>
+
+          <div className={styles.card}>
+            <label>📧 E-mail (Não editável)</label>
+            <p>{usuario.email}</p>
           </div>
-        )}
+
+          <div className={styles.card}>
+            <label>📱 WhatsApp</label>
+            {editando ? (
+              <input type="text" className={styles.inputEdit} value={usuario.telefone} onChange={e => setUsuario({...usuario, telefone: e.target.value})} />
+            ) : <p>{usuario.telefone || "Não cadastrado"}</p>}
+          </div>
+
+          <div className={styles.card}>
+            <label>📍 Endereço de Entrega</label>
+            {editando ? (
+              <input type="text" className={styles.inputEdit} value={usuario.endereco} onChange={e => setUsuario({...usuario, endereco: e.target.value})} />
+            ) : <p>{usuario.endereco || "Nenhum endereço salvo"}</p>}
+          </div>
+
+          <div className={styles.card}>
+            <label>🏷️ Referência</label>
+            {editando ? (
+              <input type="text" className={styles.inputEdit} value={usuario.referencia} onChange={e => setUsuario({...usuario, referencia: e.target.value})} />
+            ) : <p>{usuario.referencia || "Não informado"}</p>}
+          </div>
+
+          {editando ? (
+            <div className={styles.botoes}>
+              <button type="submit" className={styles.btnSalvar} disabled={salvando}>
+                {salvando ? "Salvando..." : "Gravar Alterações"}
+              </button>
+              <button type="button" className={styles.btnCancelar} onClick={() => setEditando(false)}>Cancelar</button>
+            </div>
+          ) : (
+            <button type="button" className={styles.btnAcao} onClick={() => setEditando(true)}>Editar Meus Dados</button>
+          )}
+        </form>
       </main>
       <MenuInferior />
     </div>
