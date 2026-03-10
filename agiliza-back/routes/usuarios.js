@@ -62,6 +62,28 @@ router.post('/registrar', async (req, res) => {
     }
 });
 
+// --- ROTA PARA ATUALIZAR DADOS DO PERFIL (NOME, TEL, ENDEREÇO, REF) ---
+router.put('/perfil', auth, async (req, res) => {
+    try {
+        const updates = Object.keys(req.body);
+        const camposPermitidos = ['nome', 'telefone', 'endereco', 'referencia'];
+        const operacaoValida = updates.every(update => camposPermitidos.includes(update));
+
+        if (!operacaoValida) {
+            return res.status(400).send({ erro: 'Atualização inválida!' });
+        }
+
+        const usuario = await Usuario.findById(req.usuario.id);
+        
+        updates.forEach(update => usuario[update] = req.body[update]);
+        await usuario.save();
+
+        res.send(usuario);
+    } catch (e) {
+        res.status(400).send({ erro: "Erro ao atualizar perfil: " + e.message });
+    }
+});
+
 // --- ROTA PARA LOGIN (MANTIDA ORIGINAL) ---
 router.post('/login', async (req, res) => {
     try {
