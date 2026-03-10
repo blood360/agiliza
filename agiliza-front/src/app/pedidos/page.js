@@ -15,69 +15,53 @@ export default function PedidosPage() {
   useEffect(() => {
     const carregarPedidos = async () => {
       const token = localStorage.getItem('agiliza_token');
-      
-      if (!token) {
-        router.push('/login');
-        return;
-      }
+      if (!token) return router.push('/login');
 
       try {
-        // Buscando os pedidos reais do cliente logado
         const res = await fetch(`${API_URL}/api/pedidos/meus-pedidos`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-
-        if (res.ok) {
-          const data = await res.json();
-          setPedidos(data);
-        } else {
-          notify("Não consegui carregar seu histórico.", "error");
-        }
+        const data = await res.json();
+        if (res.ok) setPedidos(data);
       } catch (err) {
-        console.error("Erro ao buscar pedidos:", err);
+        notify("Erro ao buscar seus pedidos.", "error");
       } finally {
         setCarregando(false);
       }
     };
-
     carregarPedidos();
   }, [router, notify]);
+
+  if (carregando) {
+    return (
+      <div className={styles.loaderContainer}>
+        <div className={styles.spinnerWrapper}>
+          <img src="/motoagiliza.png" alt="Moto Agiliza" className={styles.loaderImage} />
+          <div className={styles.spinnerCircle}></div>
+        </div>
+        <p className={styles.loaderText}>aguarde, estou consultando seus pedidos...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>Meus Pedidos 📋</h1>
+        <h1>Meus Pedidos</h1>
       </header>
-
       <main className={styles.lista}>
-        {carregando ? (
-          <p className={styles.aviso}>Buscando seus pedidos... ⏳</p>
-        ) : pedidos.length > 0 ? (
-          pedidos.map((pedido) => (
-            <div key={pedido._id} className={styles.cardPedido}>
-              <div className={styles.info}>
-                <h3>Pedido #{pedido._id.slice(-6)}</h3>
-                <p className={styles.data}>{new Date(pedido.createdAt).toLocaleDateString('pt-BR')}</p>
-                <p><strong>Loja:</strong> {pedido.nomeLoja}</p>
-                <p><strong>Total:</strong> R$ {pedido.total.toFixed(2)}</p>
-              </div>
-              <div className={`${styles.status} ${styles[pedido.status]}`}>
-                {pedido.status.toUpperCase()}
-              </div>
+        {pedidos.length > 0 ? (
+          pedidos.map(p => (
+            <div key={p._id} className={styles.cardPedido}>
+              <p><strong>{p.nomeLoja}</strong></p>
+              <p>Total: R$ {p.total.toFixed(2)}</p>
+              <span className={styles.status}>{p.status}</span>
             </div>
           ))
         ) : (
-          <div className={styles.vazio}>
-            <p>Você ainda não fez nenhum pedido em Magé. 🌵</p>
-            <button onClick={() => router.push('/explorar')} className={styles.btnBora}>
-              Bora pedir uma pizza? 🍕
-            </button>
-          </div>
+          <p className={styles.vazio}>Nenhum pedido encontrado.</p>
         )}
       </main>
-
       <MenuInferior />
     </div>
   );
