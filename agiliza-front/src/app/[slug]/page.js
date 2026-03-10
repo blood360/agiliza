@@ -7,7 +7,7 @@ import MenuInferior from '@/components/MenuInferior';
 import BotaoCompartilhar from '@/components/BotaoCompartilhar';
 import { useAgiliza } from "@/context/AgilizaContext";
 import { useNotify } from '@/context/ToastContext';
-import Checkout from '@components/Checkout';
+import Checkout from '@c/omponents/Checkout';
 
 export default function HomeLoja() {
   const { usuario } = useAgiliza(); 
