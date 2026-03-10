@@ -1,0 +1,48 @@
+.container {
+  padding: 20px;
+  padding-bottom: 100px;
+  background-color: #f4f4f4;
+  min-height: 100vh;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.cardPedido {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.status {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.pendente { background: #fef3c7; color: #92400e; }
+.entregue { background: #dcfce7; color: #166534; }
+
+.vazio {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.btnBora {
+  margin-top: 20px;
+  padding: 12px 20px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+}
