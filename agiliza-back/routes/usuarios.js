@@ -4,7 +4,39 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
 
-// Rota para registrar novo usuário (Sempre nasce como 'cliente')
+// --- MIDDLEWARE DE AUTENTICAÇÃO (O GUARDA DA AS AUTOMAÇÕES) ---
+// Ele verifica se o token é válido antes de deixar passar para o perfil
+const auth = async (req, res, next) => {
+    try {
+        const authHeader = req.header('Authorization');
+        if (!authHeader) return res.status(401).json({ erro: "Acesso negado. Token não fornecido." });
+
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_as_automacoes');
+        
+        req.usuario = decoded; // Salva os dados do usuário (id e tipo) na requisição
+        next();
+    } catch (err) {
+        res.status(401).json({ erro: "Token inválido ou expirado." });
+    }
+};
+
+// --- ROTA DE PERFIL (A QUE ESTAVA FALTANDO!) ---
+router.get('/perfil', auth, async (req, res) => {
+    try {
+        // Busca o usuário pelo ID que veio no Token, removendo a senha por segurança
+        const usuario = await Usuario.findById(req.usuario.id).select('-senha');
+        
+        if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
+
+        // Retorna o objeto completo (nome, email, telefone, endereco, referencia...)
+        res.json(usuario);
+    } catch (err) {
+        res.status(500).json({ erro: "Erro ao buscar perfil: " + err.message });
+    }
+});
+
+// --- ROTA PARA REGISTRAR (MANTIDA ORIGINAL) ---
 router.post('/registrar', async (req, res) => {
     try {
         const { nome, email, senha, telefone } = req.body;
@@ -12,7 +44,6 @@ router.post('/registrar', async (req, res) => {
         const usuarioExistente = await Usuario.findOne({ email });
         if (usuarioExistente) return res.status(400).json({ erro: "Este e-mail já está cadastrado." });
 
-        // Criptografia da senha para segurança da base
         const salt = await bcrypt.genSalt(10);
         const senhaCriptografada = await bcrypt.hash(senha, salt);
 
@@ -21,7 +52,7 @@ router.post('/registrar', async (req, res) => {
             email,
             senha: senhaCriptografada,
             telefone,
-            tipo: 'cliente' // Padrão inicial por segurança
+            tipo: 'cliente'
         });
 
         await novoUsuario.save();
@@ -31,7 +62,7 @@ router.post('/registrar', async (req, res) => {
     }
 });
 
-// Rota para realizar login
+// --- ROTA PARA LOGIN (MANTIDA ORIGINAL) ---
 router.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
@@ -39,11 +70,9 @@ router.post('/login', async (req, res) => {
         const usuario = await Usuario.findOne({ email });
         if (!usuario) return res.status(400).json({ erro: "E-mail ou senha incorretos." });
 
-        // Verifica se a senha bate com a criptografada
         const senhaValida = await bcrypt.compare(senha, usuario.senha);
         if (!senhaValida) return res.status(400).json({ erro: "E-mail ou senha incorretos." });
 
-        // Gera o Token de acesso (JWT)
         const token = jwt.sign(
             { id: usuario._id, tipo: usuario.tipo },
             process.env.JWT_SECRET || 'secret_as_automacoes',
