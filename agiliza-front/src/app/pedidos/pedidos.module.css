@@ -1,92 +1,85 @@
 .container {
-  padding: 20px;
-  padding-bottom: 100px;
-  background-color: #f4f4f4;
+  padding: 20px 20px 100px;
+  background-color: #f1f5f9;
   min-height: 100vh;
 }
 
-.header h1 {
-  font-size: 1.8rem;
-  color: #333;
-  margin-bottom: 20px;
-}
+.header h1 { font-size: 2.2rem; color: #0f172a; font-weight: 800; margin-bottom: 5px; }
+.sub { color: #64748b; margin-bottom: 30px; font-size: 0.9rem; }
 
-.cardPedido {
-  background: white;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.status {
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: bold;
-}
-
-.pendente { background: #fef3c7; color: #92400e; }
-.entregue { background: #dcfce7; color: #166534; }
-
-.vazio {
-  text-align: center;
-  margin-top: 50px;
-}
-
-.btnBora {
-  margin-top: 20px;
-  padding: 12px 20px;
-  background: #dc2626;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-}
-
+/* A MOTINHA GIRANDO - DESIGN AS AUTOMAÇÕES */
 .loaderContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  background-color: #fff;
+  height: 90vh;
+  background: white;
 }
 
 .spinnerWrapper {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: 130px;
+  height: 130px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .loaderImage {
-  width: 60px;
+  width: 75px;
   z-index: 2;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
 }
 
 .spinnerCircle {
   position: absolute;
-  width: 90px;
-  height: 90px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #dc2626; /* Vermelho Agiliza */
+  width: 110px;
+  height: 110px;
+  border: 6px solid #f1f5f9;
+  border-top: 6px solid #dc2626; /* VERMELHO AGILIZA */
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .loaderText {
-  margin-top: 20px;
-  font-weight: 500;
-  color: #666;
+  margin-top: 25px;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+/* CARDS DE ELITE */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 18px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  margin-bottom: 15px;
+  border-left: 5px solid #dc2626;
+}
+
+.card label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.card p { font-size: 1.1rem; color: #1e293b; font-weight: 600; }
+
+.btnAcao {
+  width: 100%;
+  padding: 18px;
+  background: #1e293b;
+  color: white;
+  border: none;
+  border-radius: 15px;
+  font-weight: 700;
+  margin-top: 15px;
+  box-shadow: 0 10px 15px -3px rgba(30, 41, 59, 0.3);
 }

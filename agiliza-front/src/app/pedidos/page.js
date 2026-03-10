@@ -13,7 +13,7 @@ export default function PedidosPage() {
   const notify = useNotify();
 
   useEffect(() => {
-    const carregarPedidos = async () => {
+    const carregar = async () => {
       const token = localStorage.getItem('agiliza_token');
       if (!token) return router.push('/login');
 
@@ -24,12 +24,12 @@ export default function PedidosPage() {
         const data = await res.json();
         if (res.ok) setPedidos(data);
       } catch (err) {
-        notify("Erro ao buscar seus pedidos.", "error");
+        notify("Erro de conexão com o servidor da AS.", "error");
       } finally {
         setCarregando(false);
       }
     };
-    carregarPedidos();
+    carregar();
   }, [router, notify]);
 
   if (carregando) {
@@ -39,27 +39,25 @@ export default function PedidosPage() {
           <img src="/motoagiliza.png" alt="Moto Agiliza" className={styles.loaderImage} />
           <div className={styles.spinnerCircle}></div>
         </div>
-        <p className={styles.loaderText}>aguarde, estou consultando seus pedidos...</p>
+        <p className={styles.loaderText}>Aguarde, estou consultando seus pedidos...</p>
       </div>
     );
   }
 
   return (
     <div className={styles.container}>
-      <header className={styles.header}>
-        <h1>Meus Pedidos</h1>
-      </header>
-      <main className={styles.lista}>
+      <header className={styles.header}><h1>Meus Pedidos</h1></header>
+      <main>
         {pedidos.length > 0 ? (
           pedidos.map(p => (
-            <div key={p._id} className={styles.cardPedido}>
-              <p><strong>{p.nomeLoja}</strong></p>
+            <div key={p._id} className={styles.card}>
+              <label>Loja: {p.nomeLoja}</label>
               <p>Total: R$ {p.total.toFixed(2)}</p>
-              <span className={styles.status}>{p.status}</span>
+              <p>Status: <strong>{p.status}</strong></p>
             </div>
           ))
         ) : (
-          <p className={styles.vazio}>Nenhum pedido encontrado.</p>
+          <p className={styles.loaderText}>Nenhum pedido feito ainda. 🌵</p>
         )}
       </main>
       <MenuInferior />
