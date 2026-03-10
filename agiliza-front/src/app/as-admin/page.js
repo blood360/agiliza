@@ -1,22 +1,29 @@
 'use client'
 import { useState, useEffect } from 'react';
+import {useNotify} from '@/context/ToastContext'
 import styles from './master.module.css';
 import Image from 'next/image';
 
 export default function MasterDashboard() {
+  const [assinantes, setAssinantes] = useState([]);
+  const notify = useNotify();
   const [abaAtiva, setAbaAtiva] = useState('assinantes');
   const [isModalNovo, setIsModalNovo] = useState(false);
   const [novoAssinante, setNovoAssinante] = useState({ loja: '', dono: '', plano: 'Iniciante' });
 
-  const [assinantes, setAssinantes] = useState([
-    { id: 1, loja: "Pizzaria Magé", dono: "João Silva", plano: "Pro", status: "Ativo", valor: 89.90, vencimento: "2026-04-10" },
-    { id: 2, loja: "Burguer do Igor", dono: "Igor Antonio", plano: "Iniciante", status: "Inadimplente", valor: 49.90, vencimento: "2026-03-01" },
-    { id: 3, loja: "Sushi da Vila", dono: "Ana Oliveira", plano: "Iniciante", status: "Ativo", valor: 49.90, vencimento: "2026-03-20" }
-  ]);
 
   useEffect(() => {
-    localStorage.setItem('agiliza_lista_assinantes', JSON.stringify(assinantes));
-  }, [assinantes]);
+    const buscarAssinantes = async () => {
+      try {
+        const resposta = await fetch('http://localhost:5000/api/assinantes');
+        const dados = await resposta.json();
+        setAssinantes(dados);
+      } catch (err) {
+        notify("Erro ao buscar lojas no banco de dados.", 'error');
+      }
+    };
+    buscarAssinantes();
+  }, []);
 
   const custosAS = {
     salarioIgor: 3400.00,
@@ -25,39 +32,89 @@ export default function MasterDashboard() {
     dominio: 3.33
   };
 
-  // 🚀 Funções de Ação (Agora no lugar certo!)
-  const alternarInadimplencia = (id) => {
-    const atualizados = assinantes.map(a => {
-      if (a.id === id) {
-        const novoStatus = a.status === 'Inadimplente' ? 'Ativo' : 'Inadimplente';
-        return { ...a, status: novoStatus };
+  // 🚀 Funções de Ação
+  const alternarInadimplencia = async (id) => {
+    const assinante = assinantes.find(a => a._id === id); // Procura o cabra na lista
+    const novoStatus = assinante.status === 'Inadimplente' ? 'Ativo' : 'Inadimplente';
+
+    try {
+      const resposta = await fetch(`http://localhost:5000/api/assinantes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: novoStatus })
+      });
+
+      if (resposta.ok) {
+        const atualizado = await resposta.json();
+        // Atualiza a tela sem recarregar
+        setAssinantes(assinantes.map(a => a._id === id ? atualizado : a));
+        notify("Status de pagamento atualizado no banco!", "success");
       }
-      return a;
-    });
-    setAssinantes(atualizados);
-    alert("Status de pagamento atualizado, macho!");
+    } catch (err) {
+      notify("Macho, o banco não respondeu!", "error");
+    }
   };
 
-  const handleCriarAcesso = (e) => {
+  const handleCriarAcesso = async (e) => {
     e.preventDefault();
-    const novoItem = {
-      id: Date.now(),
-      loja: novoAssinante.loja,
-      dono: novoAssinante.dono,
-      plano: novoAssinante.plano,
-      status: "Ativo",
-      valor: novoAssinante.plano === 'Pro' ? 89.90 : 49.90,
-      vencimento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    };
-    setAssinantes([...assinantes, novoItem]);
-    setIsModalNovo(false);
-    setNovoAssinante({ loja: '', dono: '', plano: 'Iniciante' });
-    alert("Vixe! Novo parceiro cadastrado com sucesso!");
+    try {
+      const resposta = await fetch("http://localhost:5000/api/assinantes", {
+        method: 'POST',
+        headers: {'Contet-Type': 'application/json'},
+        body: JSON.stringify(novoAssinante)
+      });
+      if (resposta.ok) {
+        const salvo = await resposta.json();
+        setAssinantes([...assinantes, salvo]);
+        setIsModalNovo(false);
+        setNovoAssinante("Assinante cadastrado com sucesso!", 'success');
+      }
+    } catch (err) {
+      notify("Erro ao salvar assinante.", "error");
+    }
   };
 
-  const alternarAcesso = (id) => {
-    setAssinantes(assinantes.map(a => a.id === id ? { ...a, status: a.status === 'Ativo' ? 'Bloqueado' : 'Ativo' } : a));
+  const alternarAcesso = async (id) => {
+    const assinante = assinantes.find(a => a._id === id);
+    const novoStatus = assinante.status === 'Ativo' ? 'Bloqueado' : 'Ativo';
+
+    try {
+      const resposta = await fetch(`http://localhost:5000/api/assinantes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: novoStatus })
+      });
+
+      if (resposta.ok) {
+        const atualizado = await resposta.json();
+        setAssinantes(assinantes.map(a => a._id === id ? atualizado : a));
+        
+        const msg = novoStatus === 'Bloqueado' ? "🚫 Loja suspensa!" : "✅ Loja liberada!";
+        notify(msg, novoStatus === 'Bloqueado' ? "warning" : "success");
+      }
+    } catch (err) {
+      notify("Erro na comunicação com o servidor.", "error");
+    }
   };
+
+  const handleExcluir = async (id, nomeLoja) => {
+  const confirmou = window.confirm(`Patrão tem certeza que quer apagar a loja "${nomeLoja}"?`);
+  
+  if (!confirmou) return;
+
+  try {
+    const resposta = await fetch(`http://localhost:5000/api/assinantes/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (resposta.ok) {
+      setAssinantes(assinantes.filter(a => a._id !== id));
+      notify(`Vixe! A loja ${nomeLoja} foi pro beleléu com sucesso! 🗑️`, "success");
+    }
+  } catch (err) {
+    notify("Erro ao tentar apagar no banco. Tente de novo!", "error");
+  }
+};
 
   const calc = () => {
     const totalAssinantes = assinantes.length;
@@ -138,13 +195,23 @@ export default function MasterDashboard() {
                         <button onClick={() => alternarAcesso(a.id)} className={styles.btnBloquear}>
                           {a.status === 'Bloqueado' ? '✅ Liberar' : '🚫 Bloquear'}
                         </button>
+
                         <button 
                           onClick={() => alternarInadimplencia(a.id)} 
                           className={a.status === 'Inadimplente' ? styles.btnPago : styles.btnCobrar}
                         >
                           {a.status === 'Inadimplente' ? '💰 Marcar Pago' : '⚠️ Inadimplente'}
                         </button>
+
                         <button className={styles.btnEditar}>📝</button>
+
+                        <button 
+                          onClick={() => handleExcluir(a._id, a.loja)} 
+                          className={styles.btnExcluir}
+                          title="Apagar Assinante"
+                        >
+                          🗑️
+                        </button>
                       </div>
                     </td>
                   </tr>

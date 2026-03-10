@@ -1,4 +1,5 @@
 import { AgilizaProvider } from '@/context/AgilizaContext';
+import { ToastProvider } from '@/context/ToastContext';
 import './globals.css';
 
 export default function RootLayout({ children }) {
@@ -6,7 +7,9 @@ export default function RootLayout({ children }) {
     <html lang="pt-br">
       <body>
         <AgilizaProvider>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </AgilizaProvider>
       </body>
     </html>

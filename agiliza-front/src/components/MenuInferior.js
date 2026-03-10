@@ -13,9 +13,9 @@ export default function MenuInferior() {
 
     return (
         <footer className={styles.menuInferior}>
-            <Link href={linkHome} className={pathname === linkHome ? styles.itemAtivo : styles.itemMenu}>
+            <Link href='/explorar' className={pathname === '/explorar' ? styles.itemAtivo : styles.active}>
                 <span>🏠</span>
-                <small>Cardápio</small>
+                <small>Explorar</small>
             </Link>
 
             <Link href={linkPedidos} className={pathname === linkPedidos ? styles.itemAtivo : styles.itemMenu}>

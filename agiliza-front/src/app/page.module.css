@@ -295,6 +295,16 @@
   margin: 0 auto;
 }
 
+.cardProduto h3 {
+  font-size: 1rem;
+  white-space: normal; /* Permite que o texto quebre linha */
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Limita a 2 linhas e bota reticências se for maior */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 2.4em; /* Mantém o alinhamento */
+}
+
 .containerPedidos {
     padding: 15px;
     padding-bottom: 100px;
@@ -391,6 +401,10 @@
   flex-direction: column;
   min-height: 100vh;
   background-color: #fff;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden; /* Garante que nada escape para o lado */
+  padding: 10px;
 }
 
 .btnFlutuanteCarrinho {
@@ -518,16 +532,102 @@
 }
 
 .headerLoja {
-  padding: 20px;
+  padding: 20px 10px;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 15px;
   background-color: #f8f9fa;
 }
 
+.nomeLojaPrincipal {
+  font-size: 1.8rem; /* Reduzi o tamanho para não cortar */
+  word-wrap: break-word;
+  max-width: 100%;
+  line-height: 1.2;
+}
 .btnLojaFechada {
   position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
   background-color: #666; color: #ccc; padding: 15px 30px;
   border-radius: 30px; font-weight: bold; border: none; cursor: not-allowed;
   z-index: 1001; width: 90%; max-width: 400px;
+}
+
+/* CONTAINER CENTRALIZADO NA TELA INTEIRA */
+.loaderContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* Ocupa a altura toda */
+  width: 100%;
+  position: fixed; /* Fica travado na tela */
+  top: 0;
+  left: 0;
+  background-color: #f8fafc; /* Cor de fundo limpinha */
+  z-index: 10000; /* Fica na frente de tudo */
+}
+
+/* WRAPPER PRA SEGURAR A MOTO E O CÍRCULO */
+.spinnerWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px; /* Tamanho da área da animação */
+  height: 150px;
+}
+
+/* A IMAGEM DA MOTO NO MEIO (motoagiliza.png) */
+.loaderImage {
+  width: 80px; /* Reduzi um pouco pra caber melhor no círculo */
+  height: auto;
+  display: block; /* Garante que ela apareça */
+  position: relative;
+  z-index: 10;
+}
+
+/* O CÍRCULO GIRANDO AO REDOR */
+.spinnerCircle {
+  position: absolute;
+  width: 130px; /* Um pouco maior que a moto */
+  height: 130px;
+  border-radius: 50%; /* Faz ficar redondo */
+  border: 4px solid rgba(220, 38, 38, 0.1); /* Borda clarinha de fundo (Vermelho AS suave) */
+  border-top: 4px solid #dc2626; /* A parte vermelha que gira */
+  animation: spin 1s linear infinite; /* Chama a animação 'spin' ali embaixo */
+  z-index: 1;
+}
+
+/* O TEXTO EM BAIXO */
+.loaderText {
+  margin-top: 25px;
+  color: #1e293b;
+  font-weight: 500;
+  font-size: 1.1rem;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+/* 🔄 A MÁGICA DA ROTAÇÃO */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  .nomeLojaPrincipal {
+    font-size: 1.5rem;
+  }
+  
+  .headerLoja {
+    padding: 15px 5px;
+  }
+  
+  /* Se tiver um grid de produtos, force 2 colunas ou 1 dependendo do espaço */
+  .gridProdutos {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
 }
