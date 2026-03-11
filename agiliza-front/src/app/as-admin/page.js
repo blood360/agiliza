@@ -75,16 +75,30 @@ export default function MasterDashboard() {
         body: JSON.stringify(novoAssinante)
       });
 
+      // 1. Pega a resposta do servidor (seja sucesso ou erro)
+      const dados = await resposta.json();
+
       if (resposta.ok) {
-        const salvo = await resposta.json();
-        setAssinantes([...assinantes, salvo]);
+        // 2. Atualiza a lista na tela com o que voltou do banco
+        setAssinantes([...assinantes, dados]);
+        
+        // 3. Fecha o modal
         setIsModalNovo(false);
-        setNovoAssinante("Assinante cadastrado com sucesso!", 'success');
+        
+        // 4. LIMPA O FORMULÁRIO (Essencial pra não bugar o próximo cadastro)
+        setNovoAssinante({ loja: '', dono: '', plano: 'Iniciante', vencimento: '' });
+        
+        // 5. USA O NOTIFY PRA MENSAGEM (E não o setNovoAssinante!)
+        notify("Assinante cadastrado com sucesso! 🚀", 'success');
+      } else {
+        // Se o servidor deu erro (tipo o 400), ele avisa o motivo real
+        notify(dados.erro || "Vixe! O servidor barrou o cadastro.", "error");
       }
     } catch (err) {
-      notify("Erro ao salvar assinante.", "error");
+      console.error("Erro ao salvar:", err);
+      notify("Macho, o servidor da AS tá fora do ar!", "error");
     }
-  };
+};
 
   const alternarAcesso = async (id) => {
     const assinante = assinantes.find(a => a._id === id);
@@ -278,7 +292,7 @@ export default function MasterDashboard() {
                 <option value="Iniciante">Iniciante (R$ 49,90)</option>
                 <option value="Pro">Pro (R$ 89,90)</option>
               </select>
-              
+
               <div className={styles.modalBotoes}>
                 <button type="submit" className={styles.btnConfirmar}>Criar e Liberar</button>
                 <button type="button" onClick={() => setIsModalNovo(false)} className={styles.btnCancelar}>Fechar</button>
