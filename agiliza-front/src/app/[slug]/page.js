@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // 👈 Adicionado useCallback
 import { useParams, useRouter } from 'next/navigation';
 import styles from '@/app/page.module.css';
 import ListaProdutosGrid from '@/components/ListaProdutosGrid';
@@ -18,56 +18,55 @@ export default function HomeLoja() {
   const notify = useNotify();
   
   const [configsLocal, setConfigsLocal] = useState(null);
-  const [produtosReais, setProdutosReais] = useState([]); // 👈 ESTADO PARA PRODUTOS REAIS
+  const [produtosReais, setProdutosReais] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lojaEstaAberta, setLojaEstaAberta] = useState(true);
   const [carregando, setCarregando] = useState(true);
 
-  useEffect(() => {
-    const carregarDadosCompletos = async () => {
-      if (!slug) return;
+  // 🛡️ 1. FUNÇÃO MESTRA (Agora com nome único e useCallback)
+  const carregarDadosDaLoja = useCallback(async () => {
+    if (!slug) return;
 
-      try {
-        // 1. Busca os dados da Loja pelo Slug
-        const resLoja = await fetch(`${API_URL}/api/assinantes/loja/${slug}`);
-        
-        if (resLoja.status === 404) {
-          notify("Desculpe, Loja não encontrada. 🗺️", "error");
-          router.push('/');
-          return;
-        }
-
-        const dadosDaLoja = await resLoja.json();
-
-        if (dadosDaLoja.status === 'Bloqueado') {
-          router.push('/suspenso');
-          return;
-        }
-
-        setConfigsLocal(dadosDaLoja);
-        
-        // 2. Define se a loja está aberta baseado no BANCO, não no localStorage
-        setLojaEstaAberta(dadosDaLoja.status_loja !== 'fechada');
-
-        // 3. BUSCA OS PRODUTOS REAIS DA LOJA NO BACKEND
-        const resProdutos = await fetch(`${API_URL}/api/produtos?lojaId=${dadosDaLoja._id}`);
-        const listaProdutos = await resProdutos.json();
-        
-        if (Array.isArray(listaProdutos)) {
-          setProdutosReais(listaProdutos);
-        }
-
-      } catch (err) {
-        console.error("Erro de conexão:", err);
-        notify("Macho, erro ao carregar a vitrine!", "error");
-      } finally {
-        // Um tempinho pra motinha girar e dar o charme
-        setTimeout(() => setCarregando(false), 1000);
+    try {
+      // A. Busca os dados da Loja pelo Slug
+      const resLoja = await fetch(`${API_URL}/api/assinantes/loja/${slug}`);
+      
+      if (resLoja.status === 404) {
+        notify("Vixe! Loja não encontrada. 🗺️", "error");
+        router.push('/');
+        return;
       }
-    };
 
-    carregarTudo();
-  }, [slug, router]);
+      const dadosDaLoja = await resLoja.json();
+
+      if (dadosDaLoja.status === 'Bloqueado') {
+        router.push('/suspenso');
+        return;
+      }
+
+      setConfigsLocal(dadosDaLoja);
+      setLojaEstaAberta(dadosDaLoja.status_loja !== 'fechada');
+
+      // B. Busca os produtos reais dessa loja específica
+      const resProdutos = await fetch(`${API_URL}/api/produtos?lojaId=${dadosDaLoja._id}`);
+      const listaProdutos = await resProdutos.json();
+      
+      if (Array.isArray(listaProdutos)) {
+        setProdutosReais(listaProdutos);
+      }
+
+    } catch (err) {
+      console.error("Erro na vitrine:", err);
+      notify("Macho, erro ao carregar a vitrine!", "error");
+    } finally {
+      setCarregando(false);
+    }
+  }, [slug, router, notify]);
+
+  // 🔄 2. CHAMA A FUNÇÃO QUANDO ENTRA NA PÁGINA
+  useEffect(() => {
+    carregarDadosDaLoja();
+  }, [carregarDadosDaLoja]);
 
   const totalPedido = carrinho.reduce((acc, item) => acc + item.preco, 0);
 
@@ -93,7 +92,6 @@ export default function HomeLoja() {
 
   return (
     <main className={styles.containerLoja}>
-      {/* Banner de Status da Loja */}
       <div className={lojaEstaAberta ? styles.bannerAviso : styles.bannerFechado}>
         <span>{lojaEstaAberta ? `✅ Aberto agora: ${nomeExibicao}` : "🚫 ESTAMOS FECHADOS NO MOMENTO"}</span>
       </div>
@@ -106,7 +104,6 @@ export default function HomeLoja() {
         <BotaoCompartilhar />
       </header>
 
-      {/* 🚀 MUDANÇA AQUI: Agora passa os produtosReais que vieram do Banco! */}
       {produtosReais.length > 0 ? (
         <ListaProdutosGrid produtos={produtosReais} onAdd={adicionarAoCarrinho} />
       ) : (
@@ -124,7 +121,7 @@ export default function HomeLoja() {
       {isModalOpen && (
         <Checkout 
           aoFechar={() => setIsModalOpen(false)} 
-          lojaId={configsLocal?._id} // Passa o ID da loja pro Checkout salvar o pedido certo
+          lojaId={configsLocal?._id} 
         />
       )}
 
