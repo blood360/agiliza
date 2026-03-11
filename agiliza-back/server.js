@@ -19,8 +19,8 @@ app.use(cors({
 }));
 
 // 📦 2. MIDDLEWARES DE PARSE (Essencial para ler o que vem do Frontend)
-app.use(express.json()); 
-app.use(express.urlencoded({ extended: true })); // 👈 ADICIONE ISSO! Ajuda a ler dados de formulários
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // 🔍 3. DEDO-DURO (Middleware de Log para teste - pode apagar depois)
 app.use((req, res, next) => {

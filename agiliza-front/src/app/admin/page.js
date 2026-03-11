@@ -3,43 +3,65 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import styles from './admin.module.css';
 import Link from 'next/link';
-import API_URL from '@/config/api'; // 👈 Importante!
+import API_URL from '@/config/api'; 
 import { useNotify } from '@/context/ToastContext';
 
 export default function DashboardAdmin() {
   const [pedidos, setPedidos] = useState([]);
-  const [loja, setLoja] = useState(null); // Para o nome da loja real
+  const [loja, setLoja] = useState(null); 
   const [lojaAberta, setLojaAberta] = useState(true);
   const [abaAtiva, setAbaAtiva] = useState('Pendente');
   const [carregando, setCarregando] = useState(true);
   const notify = useNotify();
 
-  // 1. Lógica de Carregamento Real (API)
   useEffect(() => {
     const carregarTudo = async () => {
       try {
         const userJson = localStorage.getItem('@Agiliza:Usuario');
-        if (!userJson) return window.location.href = '/login';
+        
+        // 🛡️ TRAVA 1: Se não tem usuário, manda pro login
+        if (!userJson) {
+           window.location.href = '/login';
+           return;
+        }
         
         const usuario = JSON.parse(userJson);
         const lojaId = usuario.lojaId;
 
-        // A. Busca dados da Loja (Status e Nome)
+        // 🛡️ TRAVA 2: Evita buscar se o ID for nulo ou string "null"
+        if (!lojaId || lojaId === "null" || lojaId === "undefined") {
+          setCarregando(false);
+          return;
+        }
+
+        // A. Busca dados da Loja
         const resLoja = await fetch(`${API_URL}/api/assinantes/${lojaId}`);
+        
+        // Se a resposta não for OK (ex: 404), não tenta ler o JSON
+        if (!resLoja.ok) {
+           console.warn("Loja ainda não encontrada no banco...");
+           return;
+        }
+        
         const dadosLoja = await resLoja.json();
         setLoja(dadosLoja);
         setLojaAberta(dadosLoja.status_loja !== 'fechada');
 
         // B. Busca Pedidos da Loja
         const resPedidos = await fetch(`${API_URL}/api/pedidos?lojaId=${lojaId}`);
-        const novosPedidos = await resPedidos.json();
         
-        // Alerta sonoro se chegar pedido novo no banco
-        if (novosPedidos.length > pedidos.length && novosPedidos.some(p => p.status === 'Pendente')) {
-          new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
+        if (resPedidos.ok) {
+          const novosPedidos = await resPedidos.json();
+          
+          // 🛡️ TRAVA 3: Garante que novosPedidos é um Array antes de comparar
+          if (Array.isArray(novosPedidos)) {
+            if (novosPedidos.length > pedidos.length && novosPedidos.some(p => p.status === 'Pendente')) {
+              new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
+            }
+            setPedidos(novosPedidos);
+          }
         }
 
-        setPedidos(Array.isArray(novosPedidos) ? novosPedidos : []);
       } catch (err) {
         console.error("Erro ao carregar dashboard:", err);
       } finally {
@@ -48,12 +70,13 @@ export default function DashboardAdmin() {
     };
 
     carregarTudo();
-    const intervalo = setInterval(carregarTudo, 10000); // Polling de 10s pra não fritar o Render
+    const intervalo = setInterval(carregarTudo, 10000); 
     return () => clearInterval(intervalo);
   }, [pedidos.length]);
 
-  // 2. Funções de Controle (Agora salvam no Banco!)
+  // --- Funções de Controle (Mantidas Exatamente como as suas) ---
   const toggleLoja = async () => {
+    if (!loja?._id) return;
     const novoStatus = lojaAberta ? 'fechada' : 'aberta';
     try {
       const res = await fetch(`${API_URL}/api/assinantes/${loja._id}`, {
@@ -86,7 +109,6 @@ export default function DashboardAdmin() {
     }
   };
 
-  // 3. Métricas Reais
   const totalVendas = pedidos.filter(p => p.status === 'Entregue').reduce((acc, p) => acc + p.total, 0);
   const novosPedidosCount = pedidos.filter(p => p.status === 'Pendente').length;
 
@@ -112,9 +134,8 @@ export default function DashboardAdmin() {
       <main className={styles.mainContent}>
         <header className={styles.mainHeader}>
           <div className={styles.welcomeText}>
-            {/* 🎯 AQUI: Agora mostra o nome da loja real do banco! */}
             <h1>{loja?.loja || 'Painel do Lojista'} 🏪</h1>
-            <p>Seja bem-vindo, {loja?.dono || 'Adriano'}. Veja o resumo da sua Loja.</p>
+            <p>Seja bem-vindo, {loja?.dono || 'Lojista'}. Veja o resumo da sua Loja.</p>
           </div>
           <div className={styles.lojaStatusCard}>
             <span className={lojaAberta ? styles.txtAberto : styles.txtFechado}>
@@ -172,7 +193,7 @@ export default function DashboardAdmin() {
                     <p className={styles.phone}>{pedido.telefone || pedido.cliente?.telefone}</p>
                     <p className={styles.address}>{pedido.endereco || pedido.cliente?.endereco}</p>
                     <div className={styles.itemsList}>
-                      {pedido.itens.map((it, i) => <span key={i}>{it.qtd}x {it.nome}</span>)}
+                      {pedido.itens?.map((it, i) => <span key={i}>{it.qtd}x {it.nome}</span>)}
                     </div>
                   </div>
                   <div className={styles.orderFooter}>

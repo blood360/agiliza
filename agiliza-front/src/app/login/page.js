@@ -22,34 +22,40 @@ export default function LoginPage() {
       const response = await fetch(`${API_URL}/api/usuarios/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // 🛡️ LIMPANDO OS DADOS ANTES DE MANDAR (Igual fizemos no registro)
         body: JSON.stringify({ 
           email: email.trim().toLowerCase(), 
           senha: senha 
         })
       });
 
+      // 🛡️ 1. Pegamos o JSON apenas UMA VEZ aqui
       const data = await response.json();
 
       if (response.ok) {
-        notify("Seja bem-vindo ao Agiliza - Sua venda na velocidade da luz! 🚀", "success");
-        
+        // 🛡️ 2. Salvando tudo o que é preciso (Token e Dados do Usuário)
         if (data.token) {
            localStorage.setItem('agiliza_token', data.token);
-           // Opcional: Salvar os dados do usuário para uso rápido
+        }
+        
+        if (data.usuario) {
            localStorage.setItem('@Agiliza:Usuario', JSON.stringify(data.usuario));
         }
+        
+        notify("Seja bem-vindo ao Agiliza - Sua venda na velocidade da luz! 🚀", "success");
 
         setTimeout(() => {
-          // 🚀 LÓGICA DE REDIRECIONAMENTO CORRIGIDA
-          if (data.usuario.tipo === 'admin') {
-            router.push('/as-admin'); // Você, o dono da AS
-          } else if (data.usuario.tipo === 'lojista') {
-            router.push('/admin');    // O seu cliente (Lojista)
+          // 🚀 3. Lógica de Redirecionamento (Dashboard Master vs Dashboard Lojista)
+          const tipo = data.usuario?.tipo;
+          
+          if (tipo === 'admin') {
+            router.push('/as-admin'); // Painel seu (Master)
+          } else if (tipo === 'lojista') {
+            router.push('/admin');    // Painel do cliente (Depósito da Baixinha)
           } else {
-            router.push('/explorar'); // O cliente final
+            router.push('/explorar'); // Cliente comum
           }
         }, 1500); 
+
       } else {
         setCarregando(false);
         notify(data.erro || "E-mail ou senha incorretos.", "error");
