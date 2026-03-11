@@ -14,17 +14,27 @@ export default function MasterDashboard() {
 
 
   useEffect(() => {
-    const buscarAssinantes = async () => {
-      try {
-        const resposta = await fetch(`${API_URL}/api/assinantes`);
-        const dados = await resposta.json();
+  const buscarAssinantes = async () => {
+    try {
+      const resposta = await fetch(`${API_URL}/api/assinantes`);
+      const dados = await resposta.json();
+
+      // 🛡️ O PULO DO GATO: Só salva se for uma lista (Array)
+      if (Array.isArray(dados)) {
         setAssinantes(dados);
-      } catch (err) {
-        notify("Erro ao buscar lojas no banco de dados.", 'error');
+      } else {
+        // Se o servidor mandou um erro (objeto), a gente deixa a lista vazia
+        console.error("Vixe, o servidor não mandou uma lista:", dados);
+        setAssinantes([]); 
       }
-    };
-    buscarAssinantes();
-  }, [notify]);
+    } catch (err) {
+      console.error("Erro de conexão:", err);
+      notify("Macho, o banco de dados tá fora do ar!", 'error');
+      setAssinantes([]); // Garante que continua sendo uma lista vazia
+    }
+  };
+  buscarAssinantes();
+}, [notify]);
 
   const custosAS = {
     salarioIgor: 3400.00,

@@ -10,24 +10,12 @@ const usuariosRoutes = require('./routes/usuarios');
 
 const app = express();
 
-// Middlewares
-const origensPermitidas = [
-    'https://agiliza-front.vercel.app', 
-    'https://agiliza-swart.vercel.app'
-];
-
 app.use(cors({
-    origin: function (origin, callback) {
-        // Se a origem for um dos nossos sites ou se for um teste local (sem origin)
-        if (!origin || origensPermitidas.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error('CORS não permitido para esta origem, macho!'));
-        }
-    },
+    origin: '*', 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 
 // Definição das rotas da API
@@ -37,12 +25,15 @@ app.use('/api/usuarios', usuariosRoutes);
 
 // -- CONEXÃO COM O BANCO DE DADOS (MongoDB) --
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log("Banco de dados conectado com sucesso."))
-    .catch((err) => console.log("Erro ao conectar ao MongoDB: ", err));
+    .then(() => console.log("✅ Banco de dados conectado com sucesso."))
+    .catch((err) => {
+        console.error("❌ Erro ao conectar ao MongoDB: ", err);
+        // Se der erro no banco, o servidor avisa no log do Render
+    });
 
 // -- ROTA INICIAL DE TESTE --
 app.get('/', (req, res) => {
-    res.send("Backend da AS Automações funcionando a todo vapor!");
+    res.send("Backend da AS Automações funcionando a todo vapor! 🚀");
 });
 
 // Configuração da porta e inicialização do servidor
