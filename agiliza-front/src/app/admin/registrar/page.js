@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotify } from '@/context/ToastContext';
-import styles from './registrar.module.css'; // Já já a gente cria o estilo
+import styles from './registrar.module.css';
 import API_URL from '@/config/api';
 import Link from 'next/link';
 
@@ -12,7 +12,7 @@ export default function RegistrarLojista() {
     email: '',
     senha: '',
     telefone: '',
-    lojaId: '' // Esse é o "Código da Loja" que tu vai passar pra ele
+    lojaId: '' 
   });
 
   const [carregando, setCarregando] = useState(false);
@@ -23,22 +23,35 @@ export default function RegistrarLojista() {
     e.preventDefault();
     setCarregando(true);
 
+    // 🔍 DEDO-DURO NO NAVEGADOR (Aperte F12 para ver se os dados estão aqui)
+    console.log("Dados que estão saindo do Front:", form);
+
     try {
       const res = await fetch(`${API_URL}/api/usuarios/registrar-lojista-self`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
+          nome: form.nome.trim(),
+          email: form.email.trim().toLowerCase(), // Garante e-mail minúsculo
+          senha: form.senha,
+          telefone: form.telefone.trim(),
+          lojaId: form.lojaId.trim() // Remove espaços se o cabra copiar errado
+        })
       });
 
       const dados = await res.json();
 
       if (res.ok) {
         notify("Conta criada com sucesso! Agora é só logar. 🚀", "success");
-        router.push('/login'); // Manda ele pro login pra ele estrear a senha nova
+        router.push('/login');
       } else {
+        // Se o erro vier do backend, a gente mostra a mensagem real (ex: "ID não autorizado")
         notify(dados.erro || "Vixe, deu erro ao registrar!", "error");
       }
     } catch (err) {
+      console.error("Erro no fetch:", err);
       notify("Macho, erro na conexão com o servidor!", "error");
     } finally {
       setCarregando(false);
@@ -57,6 +70,7 @@ export default function RegistrarLojista() {
             <input 
               type="text" 
               placeholder="Ex: Adriano Marins"
+              value={form.nome} // 👈 CONTROLADO
               required 
               onChange={(e) => setForm({...form, nome: e.target.value})}
             />
@@ -67,6 +81,7 @@ export default function RegistrarLojista() {
             <input 
               type="email" 
               placeholder="exemplo@email.com"
+              value={form.email} // 👈 CONTROLADO
               required 
               onChange={(e) => setForm({...form, email: e.target.value})}
             />
@@ -77,6 +92,7 @@ export default function RegistrarLojista() {
             <input 
               type="text" 
               placeholder="Ex: 5521999999999"
+              value={form.telefone} // 👈 CONTROLADO
               required 
               onChange={(e) => setForm({...form, telefone: e.target.value})}
             />
@@ -87,6 +103,7 @@ export default function RegistrarLojista() {
             <input 
               type="password" 
               placeholder="No mínimo 6 caracteres"
+              value={form.senha} // 👈 CONTROLADO
               required 
               onChange={(e) => setForm({...form, senha: e.target.value})}
             />
@@ -97,6 +114,7 @@ export default function RegistrarLojista() {
             <input 
               type="text" 
               placeholder="Cole aqui o código da sua loja"
+              value={form.lojaId} // 👈 CONTROLADO
               required 
               onChange={(e) => setForm({...form, lojaId: e.target.value})}
             />
