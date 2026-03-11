@@ -8,38 +8,36 @@ import BotaoCompartilhar from '@/components/BotaoCompartilhar';
 import { useAgiliza } from "@/context/AgilizaContext";
 import { useNotify } from '@/context/ToastContext';
 import Checkout from '@/components/Checkout';
-import API_URL from '@/config/api'; // IMPORTANTE: Para usar a URL do Render
+import API_URL from '@/config/api';
 
 export default function HomeLoja() {
-  // 1. Pegando TUDO do contexto global (Carrinho unificado)
-  const { carrinho, adicionarAoCarrinho, usuario } = useAgiliza();
-  
+  const { carrinho, adicionarAoCarrinho } = useAgiliza();
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug;
   const notify = useNotify();
   
   const [configsLocal, setConfigsLocal] = useState(null);
+  const [produtosReais, setProdutosReais] = useState([]); // 👈 ESTADO PARA PRODUTOS REAIS
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lojaEstaAberta, setLojaEstaAberta] = useState(true);
   const [carregando, setCarregando] = useState(true);
 
-  // 🛡️ 2. SEGURANÇA AS AUTOMAÇÕES: Busca dados da Loja no Backend
   useEffect(() => {
-    const verificarAcessoELoja = async () => {
+    const carregarDadosCompletos = async () => {
       if (!slug) return;
 
       try {
-        // Usando o API_URL correto para funcionar na Vercel/Render
-        const resposta = await fetch(`${API_URL}/api/assinantes/loja/${slug}`);
+        // 1. Busca os dados da Loja pelo Slug
+        const resLoja = await fetch(`${API_URL}/api/assinantes/loja/${slug}`);
         
-        if (resposta.status === 404) {
-          notify("Vixe! Loja não encontrada. 🗺️", "error");
+        if (resLoja.status === 404) {
+          notify("Desculpe, Loja não encontrada. 🗺️", "error");
           router.push('/');
           return;
         }
 
-        const dadosDaLoja = await resposta.json();
+        const dadosDaLoja = await resLoja.json();
 
         if (dadosDaLoja.status === 'Bloqueado') {
           router.push('/suspenso');
@@ -48,36 +46,37 @@ export default function HomeLoja() {
 
         setConfigsLocal(dadosDaLoja);
         
-        const statusLocal = localStorage.getItem(`agiliza_aberta_${slug}`);
-        setLojaEstaAberta(statusLocal !== 'false');
+        // 2. Define se a loja está aberta baseado no BANCO, não no localStorage
+        setLojaEstaAberta(dadosDaLoja.status_loja !== 'fechada');
+
+        // 3. BUSCA OS PRODUTOS REAIS DA LOJA NO BACKEND
+        const resProdutos = await fetch(`${API_URL}/api/produtos?lojaId=${dadosDaLoja._id}`);
+        const listaProdutos = await resProdutos.json();
+        
+        if (Array.isArray(listaProdutos)) {
+          setProdutosReais(listaProdutos);
+        }
 
       } catch (err) {
-        notify("Macho, erro de conexão com a AS Automações!", "error");
+        console.error("Erro de conexão:", err);
+        notify("Macho, erro ao carregar a vitrine!", "error");
       } finally {
-        setTimeout(() => setCarregando(false), 800);
+        // Um tempinho pra motinha girar e dar o charme
+        setTimeout(() => setCarregando(false), 1000);
       }
     };
 
-    verificarAcessoELoja();
-  }, [slug, router, notify]);
+    carregarTudo();
+  }, [slug, router]);
 
-  // 3. CÁLCULO DO TOTAL (Sempre baseado no carrinho do contexto)
   const totalPedido = carrinho.reduce((acc, item) => acc + item.preco, 0);
 
   const abrirCheckout = () => {
-    if (!lojaEstaAberta) return notify("Vixe, macho! A loja está fechada. 🚫", "warning");
+    if (!lojaEstaAberta) return notify("Vixe, macho! A loja está fechada agora. 🚫", "warning");
     if (carrinho.length === 0) return notify("Adicione um produto antes de finalizar! 🛒", "warning");
     setIsModalOpen(true);
   };
 
-  // Itens fixos (Depois você puxa configsLocal.produtos se tiver)
-  const produtos = [
-    { id: 1, nome: "Combo Frango e Arroz", preco: 7.90 },
-    { id: 2, nome: "Suco de Frutas Frescas", preco: 7.90 },
-    { id: 3, nome: "Burger AS Premium", preco: 12.50 }
-  ];
-
-  // 🔄 LOADER DA MOTINHA GIRANDO
   if (carregando) {
     return (
       <div className={styles.loaderContainer}>
@@ -85,34 +84,36 @@ export default function HomeLoja() {
           <img src="/motoagiliza.png" alt="Moto Agiliza" className={styles.loaderImage} />
           <div className={styles.spinnerCircle}></div>
         </div>
-        <p className={styles.loaderText}>aguarde, estamos buscando os dados da loja</p>
+        <p className={styles.loaderText}>Buscando os produtos do {configsLocal?.loja || 'Depósito'}... 🌵</p>
       </div>
     );
   }
 
-  const nomeExibicao = configsLocal?.loja || "Carregando...";
+  const nomeExibicao = configsLocal?.loja || "Agiliza";
 
   return (
     <main className={styles.containerLoja}>
-      {configsLocal?.status === 'Teste' && (
-        <div className={styles.bannerTesteReal}>
-          <span>🧪 MODO DEGUSTAÇÃO: Vitrine de demonstração AS Automações.</span>
-        </div>
-      )}
-
+      {/* Banner de Status da Loja */}
       <div className={lojaEstaAberta ? styles.bannerAviso : styles.bannerFechado}>
-        <span>{lojaEstaAberta ? `⚠️ Bem-vindo à ${nomeExibicao}` : "🚫 ESTAMOS FECHADOS"}</span>
+        <span>{lojaEstaAberta ? `✅ Aberto agora: ${nomeExibicao}` : "🚫 ESTAMOS FECHADOS NO MOMENTO"}</span>
       </div>
 
       <header className={styles.headerLoja}>
         <div style={{width: '100%'}}>
           <h1 className={styles.nomeLojaPrimcipal}>{nomeExibicao}</h1>
+          <p className={styles.subtituloLoja}>{configsLocal?.descricao || 'Os melhores produtos para você!'}</p>
         </div>
         <BotaoCompartilhar />
       </header>
 
-      {/* Usando a função onAdd que vem do Contexto agora */}
-      <ListaProdutosGrid produtos={produtos} onAdd={adicionarAoCarrinho} />
+      {/* 🚀 MUDANÇA AQUI: Agora passa os produtosReais que vieram do Banco! */}
+      {produtosReais.length > 0 ? (
+        <ListaProdutosGrid produtos={produtosReais} onAdd={adicionarAoCarrinho} />
+      ) : (
+        <div className={styles.semProdutos}>
+          <p>Essa loja ainda não cadastrou produtos. 📦</p>
+        </div>
+      )}
 
       {carrinho.length > 0 && !isModalOpen && (
         <button onClick={abrirCheckout} className={styles.btnFlutuanteCarrinho}>
@@ -120,9 +121,11 @@ export default function HomeLoja() {
         </button>
       )}
 
-      {/* MODAL DE CHECKOUT PROFISSIONAL */}
       {isModalOpen && (
-        <Checkout aoFechar={() => setIsModalOpen(false)} />
+        <Checkout 
+          aoFechar={() => setIsModalOpen(false)} 
+          lojaId={configsLocal?._id} // Passa o ID da loja pro Checkout salvar o pedido certo
+        />
       )}
 
       <MenuInferior />

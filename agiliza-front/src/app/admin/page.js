@@ -3,53 +3,97 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import styles from './admin.module.css';
 import Link from 'next/link';
+import API_URL from '@/config/api'; // 👈 Importante!
+import { useNotify } from '@/context/ToastContext';
 
 export default function DashboardAdmin() {
   const [pedidos, setPedidos] = useState([]);
+  const [loja, setLoja] = useState(null); // Para o nome da loja real
   const [lojaAberta, setLojaAberta] = useState(true);
   const [abaAtiva, setAbaAtiva] = useState('Pendente');
+  const [carregando, setCarregando] = useState(true);
+  const notify = useNotify();
 
-  // 1. Lógica de Carregamento e Polling (Vindo do antigo monitor)
+  // 1. Lógica de Carregamento Real (API)
   useEffect(() => {
-    const statusSalvo = localStorage.getItem('agiliza_loja_aberta');
-    setLojaAberta(statusSalvo !== 'false');
+    const carregarTudo = async () => {
+      try {
+        const userJson = localStorage.getItem('@Agiliza:Usuario');
+        if (!userJson) return window.location.href = '/login';
+        
+        const usuario = JSON.parse(userJson);
+        const lojaId = usuario.lojaId;
 
-    const carregarEChecar = () => {
-      const atuais = JSON.parse(localStorage.getItem('agiliza_pedidos') || '[]');
-      
-      // Alerta sonoro para novos pedidos
-      if (atuais.length > pedidos.length && atuais.some(p => p.status === 'Pendente')) {
-        new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
+        // A. Busca dados da Loja (Status e Nome)
+        const resLoja = await fetch(`${API_URL}/api/assinantes/${lojaId}`);
+        const dadosLoja = await resLoja.json();
+        setLoja(dadosLoja);
+        setLojaAberta(dadosLoja.status_loja !== 'fechada');
+
+        // B. Busca Pedidos da Loja
+        const resPedidos = await fetch(`${API_URL}/api/pedidos?lojaId=${lojaId}`);
+        const novosPedidos = await resPedidos.json();
+        
+        // Alerta sonoro se chegar pedido novo no banco
+        if (novosPedidos.length > pedidos.length && novosPedidos.some(p => p.status === 'Pendente')) {
+          new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
+        }
+
+        setPedidos(Array.isArray(novosPedidos) ? novosPedidos : []);
+      } catch (err) {
+        console.error("Erro ao carregar dashboard:", err);
+      } finally {
+        setCarregando(false);
       }
-      setPedidos(atuais);
     };
 
-    carregarEChecar();
-    const intervalo = setInterval(carregarEChecar, 5000);
+    carregarTudo();
+    const intervalo = setInterval(carregarTudo, 10000); // Polling de 10s pra não fritar o Render
     return () => clearInterval(intervalo);
   }, [pedidos.length]);
 
-  // 2. Funções de Controle
-  const toggleLoja = () => {
-    const novoStatus = !lojaAberta;
-    setLojaAberta(novoStatus);
-    localStorage.setItem('agiliza_loja_aberta', novoStatus.toString());
+  // 2. Funções de Controle (Agora salvam no Banco!)
+  const toggleLoja = async () => {
+    const novoStatus = lojaAberta ? 'fechada' : 'aberta';
+    try {
+      const res = await fetch(`${API_URL}/api/assinantes/${loja._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status_loja: novoStatus })
+      });
+      if (res.ok) {
+        setLojaAberta(!lojaAberta);
+        notify(lojaAberta ? "Loja Fechada! 🔒" : "Loja Aberta! 🚀", "success");
+      }
+    } catch (err) {
+      notify("Erro ao mudar status da loja", "error");
+    }
   };
 
-  const mudarStatus = (id, novoStatus) => {
-    const atualizados = pedidos.map(p => p.id === id ? { ...p, status: novoStatus } : p);
-    setPedidos(atualizados);
-    localStorage.setItem('agiliza_pedidos', JSON.stringify(atualizados));
+  const mudarStatus = async (id, novoStatus) => {
+    try {
+      const res = await fetch(`${API_URL}/api/pedidos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: novoStatus })
+      });
+      if (res.ok) {
+        setPedidos(pedidos.map(p => p._id === id ? { ...p, status: novoStatus } : p));
+        notify(`Pedido movido para ${novoStatus}!`, "success");
+      }
+    } catch (err) {
+      notify("Erro ao atualizar pedido", "error");
+    }
   };
 
-  // 3. Métricas para preencher o Dashboard (Estilo Bento Grid)
+  // 3. Métricas Reais
   const totalVendas = pedidos.filter(p => p.status === 'Entregue').reduce((acc, p) => acc + p.total, 0);
-  const totalProdutos = 12; // Aqui depois tu puxa do teu banco de produtos
   const novosPedidosCount = pedidos.filter(p => p.status === 'Pendente').length;
+
+  if (carregando) return <div className={styles.loader}>Arrochando os dados... 🌵</div>;
 
   return (
     <div className={styles.dashboardWrapper}>
-      {/* Sidebar Profissional */}
       <aside className={styles.sidebar}>
         <div className={styles.brandArea}>
           <h2>AS <span>Agiliza</span></h2>
@@ -61,23 +105,16 @@ export default function DashboardAdmin() {
           <Link href="/admin/perfil" className={styles.navItem}>⚙️ Configurações</Link>
         </nav>
         <div className={styles.upgradeBox}>
-          <Image
-            src="/logoAS.png"
-            alt="Logo AS Automações"
-            width={100}
-            height={35}
-            className={styles.logoSidebar}
-            priority
-        />
+          <Image src="/logoAS.png" alt="Logo AS" width={100} height={35} priority />
         </div>
       </aside>
 
       <main className={styles.mainContent}>
-        {/* Header de Status */}
         <header className={styles.mainHeader}>
           <div className={styles.welcomeText}>
-            <h1>Painel do Lojista 🏪</h1>
-            <p>Seja bem-vindo, Adriano. Veja o resumo da sua Loja.</p>
+            {/* 🎯 AQUI: Agora mostra o nome da loja real do banco! */}
+            <h1>{loja?.loja || 'Painel do Lojista'} 🏪</h1>
+            <p>Seja bem-vindo, {loja?.dono || 'Adriano'}. Veja o resumo da sua Loja.</p>
           </div>
           <div className={styles.lojaStatusCard}>
             <span className={lojaAberta ? styles.txtAberto : styles.txtFechado}>
@@ -89,7 +126,6 @@ export default function DashboardAdmin() {
           </div>
         </header>
 
-        {/* Grid de Estatísticas (Inspirado na imagem transferir.jfif) */}
         <section className={styles.statsGrid}>
           <div className={styles.statCard}>
             <span className={styles.statLabel}>Vendas Concluídas</span>
@@ -108,7 +144,6 @@ export default function DashboardAdmin() {
           </div>
         </section>
 
-        {/* Gestor de Pedidos Integrado */}
         <section className={styles.ordersSection}>
           <div className={styles.ordersHeader}>
             <h2>Gestor de Pedidos</h2>
@@ -128,26 +163,26 @@ export default function DashboardAdmin() {
           <div className={styles.ordersContainer}>
             {pedidos.filter(p => p.status === abaAtiva).length > 0 ? (
               pedidos.filter(p => p.status === abaAtiva).map((pedido) => (
-                <div key={pedido.id} className={styles.orderCard}>
+                <div key={pedido._id} className={styles.orderCard}>
                   <div className={styles.orderHead}>
-                    <strong>#{pedido.id.toString().slice(-4)}</strong>
-                    <span>{new Date(pedido.id).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    <strong>#{pedido._id.slice(-4)}</strong>
+                    <span>{new Date(pedido.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                   </div>
                   <div className={styles.orderBody}>
-                    <p className={styles.phone}>{pedido.cliente.telefone}</p>
-                    <p className={styles.address}>{pedido.cliente.endereco}</p>
+                    <p className={styles.phone}>{pedido.telefone || pedido.cliente?.telefone}</p>
+                    <p className={styles.address}>{pedido.endereco || pedido.cliente?.endereco}</p>
                     <div className={styles.itemsList}>
-                      {pedido.itens.map((it, i) => <span key={i}>{it.nome}</span>)}
+                      {pedido.itens.map((it, i) => <span key={i}>{it.qtd}x {it.nome}</span>)}
                     </div>
                   </div>
                   <div className={styles.orderFooter}>
                     <span className={styles.totalValue}>R$ {pedido.total.toFixed(2)}</span>
                     <div className={styles.actions}>
                       {pedido.status === 'Pendente' && (
-                        <button onClick={() => mudarStatus(pedido.id, 'Preparando')} className={styles.btnAceitar}>ACEITAR</button>
+                        <button onClick={() => mudarStatus(pedido._id, 'Preparando')} className={styles.btnAceitar}>ACEITAR</button>
                       )}
                       {pedido.status === 'Preparando' && (
-                        <button onClick={() => mudarStatus(pedido.id, 'Entregue')} className={styles.btnDespachar}>CONCLUIR</button>
+                        <button onClick={() => mudarStatus(pedido._id, 'Entregue')} className={styles.btnDespachar}>CONCLUIR</button>
                       )}
                     </div>
                   </div>

@@ -2,10 +2,17 @@ const express = require('express');
 const router = express.Router();
 const Produto = require('../models/Produto');
 
-// 📋 1. LISTAR PRODUTOS DE UMA LOJA ESPECÍFICA (O pulo do gato!)
-router.get('/loja/:lojaId', async (req, res) => {
+// 📋 1. LISTAR PRODUTOS (Sincronizado com o nosso Frontend)
+// Agora ele aceita: /api/produtos?lojaId=ID_DA_LOJA
+router.get('/', async (req, res) => {
     try {
-        const { lojaId } = req.params;
+        const { lojaId } = req.query; // 👈 Pega o que vem depois do '?'
+
+        if (!lojaId) {
+            return res.status(400).json({ erro: "Macho, tu esqueceu de mandar o ID da loja no link!" });
+        }
+
+        // Busca só os produtos daquela loja e organiza por categoria
         const produtos = await Produto.find({ lojaId }).sort({ categoria: 1 });
         res.json(produtos);
     } catch (err) {
@@ -13,7 +20,7 @@ router.get('/loja/:lojaId', async (req, res) => {
     }
 });
 
-// 🚀 2. CADASTRAR NOVO PRODUTO
+// 🚀 2. CADASTRAR NOVO PRODUTO (DNA da loja garantido)
 router.post('/', async (req, res) => {
     try {
         const { nome, preco, descricao, categoria, lojaId, imagem } = req.body;
@@ -28,7 +35,7 @@ router.post('/', async (req, res) => {
             descricao,
             categoria,
             lojaId,
-            imagem
+            imagem // Aqui o Base64 que o lojista enviou
         });
 
         const salvo = await novoProduto.save();
@@ -38,13 +45,17 @@ router.post('/', async (req, res) => {
     }
 });
 
-// 🗑️ 3. DELETAR PRODUTO
+// 🗑️ 3. DELETAR PRODUTO (Limpeza total)
 router.delete('/:id', async (req, res) => {
     try {
-        await Produto.findByIdAndDelete(req.params.id);
-        res.json({ mensagem: "Produto removido com sucesso!" });
+        const { id } = req.params;
+        const removido = await Produto.findByIdAndDelete(id);
+        
+        if (!removido) return res.status(404).json({ erro: "Produto não encontrado no banco." });
+        
+        res.json({ mensagem: "Produto removido com sucesso! 🗑️" });
     } catch (err) {
-        res.status(500).json({ erro: err.message });
+        res.status(500).json({ erro: "Erro ao remover: " + err.message });
     }
 });
 
