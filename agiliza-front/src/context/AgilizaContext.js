@@ -21,7 +21,7 @@ export function AgilizaProvider({ children }) {
   // 🛡️ 2. DADOS DE QUEM ESTÁ LOGADO (O Dono da Loja / Admin)
   const [usuarioLogado, setUsuarioLogado] = useState(null);
 
-  // SINCRONIZAÇÃO DO USUÁRIO LOGADO (Pelo Token)
+ // SINCRONIZAÇÃO DO USUÁRIO LOGADO (Pelo Token)
   useEffect(() => {
     const carregarUsuarioLogado = async () => {
       const token = localStorage.getItem('agiliza_token');
@@ -33,6 +33,16 @@ export function AgilizaProvider({ children }) {
           if (res.ok) {
             const dados = await res.json();
             setUsuarioLogado(dados);
+
+            // 🔥 O PULO DO GATO ESTÁ AQUI: 
+            // Se o Adriano tá logado, o perfil do comprador já recebe os dados dele!
+            setPerfilCliente(prev => ({
+              ...prev,
+              nome: dados.nome || prev.nome,
+              telefone: dados.telefone || prev.telefone,
+              endereco: dados.endereco || prev.endereco,
+              referencia: dados.referencia || prev.referencia
+            }));
           }
         } catch (err) {
           console.log("Contexto: Erro ao buscar dados do logado.");
@@ -40,7 +50,6 @@ export function AgilizaProvider({ children }) {
       }
     };
 
-    // Carrega também o perfil de cliente salvo no navegador (pra não ter que digitar endereço toda vez)
     const perfilSalvo = localStorage.getItem('@Agiliza:PerfilCliente');
     if (perfilSalvo) {
       setPerfilCliente(JSON.parse(perfilSalvo));
@@ -49,7 +58,7 @@ export function AgilizaProvider({ children }) {
     carregarUsuarioLogado();
   }, []);
 
-  // FUNÇÃO PARA CARREGAR A LOJA (Sem mexer no usuário!)
+  // FUNÇÃO PARA CARREGAR A LOJA
   const carregarLoja = async (slug) => {
     try {
       const res = await fetch(`${API_URL}/api/assinantes/loja/${slug}`);
@@ -81,10 +90,10 @@ export function AgilizaProvider({ children }) {
       setCarrinho, 
       adicionarAoCarrinho, 
       removerDoCarrinho, 
-      perfilCliente,      // 👈 Para o Checkout
+      perfilCliente,      //  Para o Checkout
       setPerfilCliente,
       atualizarPerfilCliente,
-      usuarioLogado,      // 👈 Para saber quem está logado (Admin/Lojista)
+      usuarioLogado,      //  Para saber quem está logado (Admin/Lojista)
       setUsuarioLogado,
       loja,
       setLoja,
