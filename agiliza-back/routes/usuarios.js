@@ -32,35 +32,39 @@ router.get('/perfil', auth, async (req, res) => {
     }
 });
 
-// 🔑 ROTA PARA O AUTO-REGISTRO DO LOJISTA
+// 🔑 ROTA PARA O AUTO-REGISTRO DO LOJISTA (Blindada!)
 router.post('/registrar-lojista-self', async (req, res) => {
+    // 🔍 DEBUG: Isso vai mostrar no log do Render o que o servidor recebeu
+    console.log("DADOS RECEBIDOS NO BACKEND:", req.body);
+
     try {
         const { nome, email, senha, telefone, lojaId } = req.body;
 
-        // 1. Verifica se a loja existe
+        // 🛡️ Validação manual rápida antes de ir pro banco
+        if (!email || !senha || !lojaId) {
+            return res.status(400).json({ erro: "Macho, falta dado! E-mail, senha e ID da loja são obrigatórios." });
+        }
+
         const lojaExiste = await Assinante.findById(lojaId);
         if (!lojaExiste) {
-            return res.status(400).json({ erro: "Desculpe, esse código de loja não está autorizado." });
+            return res.status(400).json({ erro: "Desculpe, esse código de loja não existe ou não está autorizado." });
         }
 
-        // 2. Verifica se a loja já tem dono
         const donoExistente = await Usuario.findOne({ lojaId });
         if(donoExistente) {
-            return res.status(400).json({erro: "Essa loja já está cadastrada."});
+            return res.status(400).json({erro: "Essa loja já tem um dono cadastrado!"});
         }
 
-        // 3. Verifica se o email está em uso (CORRIGIDO: findeOne -> findOne)
+        // CORRIGIDO: findOne (sem o 'e' no meio)
         const emailUsado = await Usuario.findOne({ email });
-        if(emailUsado) return res.status(400).json({erro: "Este email já está sendo usado!"});
+        if(emailUsado) return res.status(400).json({erro: "Este e-mail já está sendo usado!"});
 
-        // 4. Criptografa a senha
         const salt = await bcrypt.genSalt(10);
         const senhaHash = await bcrypt.hash(senha, salt);
 
-        // 5. Cria o novo lojista
         const novoLojista = new Usuario({
             nome,
-            email,
+            email, // <--- Aqui o Mongoose tava reclamando
             senha: senhaHash,
             telefone,
             tipo: 'lojista',
@@ -71,8 +75,8 @@ router.post('/registrar-lojista-self', async (req, res) => {
         res.status(201).json({ mensagem: "Acesso do lojista criado com sucesso! 🚀" });
 
     } catch (err) {
-        console.error("Erro ao registrar lojista:", err);
-        res.status(500).json({ erro: "Erro interno: " + err.message });
+        console.error("ERRO NO REGISTRO:", err.message);
+        res.status(500).json({ erro: "Erro interno no servidor: " + err.message });
     }
 });
 
