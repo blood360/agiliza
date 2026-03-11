@@ -172,6 +172,25 @@ export default function MasterDashboard() {
 
   const d = calc();
 
+  const copiarID = (id) => {
+    navigator.clipboard.writeText(id);
+    notify("ID da loja copiado, envie para o cliente para concluir o acesso", "success");
+  };
+
+  const copiarConvite = (id, nomeLoja) => {
+  const mensagem = `Olá! Sua plataforma de vendas (${nomeLoja}) já foi criada com sucesso. 🚀
+
+🔗 *Link de Registro:* https://agiliza-swart.vercel.app/admin/registrar
+🔑 *Código de Vínculo:* ${id}
+
+⚠️ *Atenção:* Sem o código acima, você não consegue conectar sua conta à sua loja. Copie e cole exatamente como está.
+
+Boas vendas! Atenciosamente, *AS Automações*.`;
+
+  navigator.clipboard.writeText(mensagem);
+  notify("Convite prontinho para o Zap! Só colar pro cliente. 📲", "success");
+};
+
   return (
     <div className={styles.masterWrapper}>
       <aside className={styles.sidebarMaster}>
@@ -236,6 +255,22 @@ export default function MasterDashboard() {
                         </button>
 
                         <button className={styles.btnEditar}>📝</button>
+
+                        <button 
+                          title='Copiar ID'
+                          className={styles.btnCopiar}
+                          onClick={() => copiarID(loja._id)}
+                        >
+                          Copiar ID
+                        </button>
+
+                        <button
+                          title="Copiar Convite para o WhatsApp"
+                          className={styles.btnConvite} 
+                          onClick={() => copiarConvite(loja._id, loja.loja)}
+                        >
+                          💬 Enviar Convite
+                        </button>
 
                         <button onClick={() => handleExcluir(a._id, a.loja)} className={styles.btnExcluir}>🗑️</button>
                       </div>

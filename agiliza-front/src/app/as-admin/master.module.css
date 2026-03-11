@@ -61,6 +61,48 @@
   transition: transform 0.2s;
 }
 
+.btnCopiar {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btnCopiar:hover {
+  background-color: #e0e0e0;
+  border-color: #0070f3;
+  color: #0070f3;
+}
+
+.btnCopiar:active {
+  transform: scale(0.95);
+}
+
+.btnConvite {
+  background-color: #25d366; /* Verde do Zap */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btnConvite:hover {
+  background-color: #128c7e;
+  transform: translateY(-2px);
+}
+
 /* -- BOTÃO DE EXCLUIR -- */
 .btnExcluir {
   background: #fee2e2;

@@ -1,0 +1,122 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+
+.card h1 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.card p {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 30px;
+}
+
+.form {
+  text-align: left;
+}
+
+.campo {
+  margin-bottom: 20px;
+}
+
+.campo label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #444;
+  font-size: 14px;
+}
+
+.campo input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.3s;
+  font-size: 16px;
+}
+
+.campo input:focus {
+  border-color: #0070f3;
+}
+
+/* Destaque para o campo do Código da Loja */
+.destaque {
+  background-color: #f0f7ff;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #0070f3;
+}
+
+.destaque small {
+  display: block;
+  margin-top: 5px;
+  color: #0070f3;
+  font-size: 12px;
+}
+
+.btnRegistrar {
+  width: 100%;
+  padding: 15px;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-top: 10px;
+}
+
+.btnRegistrar:hover {
+  background-color: #0056b3;
+}
+
+.btnRegistrar:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.footer {
+  margin-top: 25px;
+  font-size: 14px;
+  color: #666;
+}
+
+.footer a {
+  color: #0070f3;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsividade para celular */
+@media (max-width: 480px) {
+  .card {
+    padding: 25px;
+  }
+}

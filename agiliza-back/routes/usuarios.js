@@ -36,6 +36,51 @@ router.get('/perfil', auth, async (req, res) => {
     }
 });
 
+const bcrypt = require('bcrypt'); // Garante que a senha seja criptografada
+
+// 🔑 ROTA PARA O MASTER ADMIN GERAR ACESSO AO LOJISTA
+router.post('/registrar-lojista-self', async (req, res) => {
+    try {
+        const { nome, email, senha, telefone, lojaId } = req.body;
+
+        // 1. Verifica se o e-mail já existe
+        const lojaExiste = await Assinante.findById(lojaId);
+        if (!lojaExiste) {
+            return res.status(400).json({ erro: "Dessculpe esse código de loja não está autorizado." });
+        }
+
+        const donoExistente = await Usuario.findOne({ lojaId });
+        if(donoExistente) {
+            return res.status(400).json({erro: "Essa loja já está cadastrada."});
+        }
+
+        /// -- verifica se o email está em uso --
+        const emailUsado = await Usuario.findeOne({ email });
+        if(emailUsado) return res.status(400).json({erro: "Este email já está sendo usado!"});
+
+        // 2. Criptografa a senha (Segurança em primeiro lugar!)
+        const salt = await bcrypt.genSalt(10);
+        const senhaHash = await bcrypt.hash(senha, salt);
+
+        // 3. Cria o novo usuário com o "DNA" da loja
+        const novoLojista = new Usuario({
+            nome,
+            email,
+            senha: senhaHash,
+            telefone,
+            tipo: 'lojista',
+            lojaId           // Aqui é o vínculo com a loja que criei
+        });
+
+        await novoLojista.save();
+        res.status(201).json({ mensagem: "Acesso do lojista criado com sucesso! 🚀" });
+
+    } catch (err) {
+        console.error("Erro ao registrar lojista:", err);
+        res.status(500).json({ erro: "Erro interno: " + err.message });
+    }
+});
+
 // --- ROTA PARA REGISTRAR (MANTIDA ORIGINAL) ---
 router.post('/registrar', async (req, res) => {
     try {
