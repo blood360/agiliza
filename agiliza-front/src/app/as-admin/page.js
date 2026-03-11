@@ -258,8 +258,8 @@ Boas vendas! Atenciosamente, *AS Automações*.`;
 
                         <button 
                           title='Copiar ID'
-                          className={styles.btnCopiar}
-                          onClick={() => copiarID(loja._id)}
+                          className={styles.btnAcaoSimples}
+                          onClick={() => copiarID(item._id)}
                         >
                           Copiar ID
                         </button>
@@ -267,7 +267,7 @@ Boas vendas! Atenciosamente, *AS Automações*.`;
                         <button
                           title="Copiar Convite para o WhatsApp"
                           className={styles.btnConvite} 
-                          onClick={() => copiarConvite(loja._id, loja.loja)}
+                          onClick={() => copiarConvite(item._id, item.loja)}
                         >
                           💬 Enviar Convite
                         </button>
