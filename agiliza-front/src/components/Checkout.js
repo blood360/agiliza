@@ -1,27 +1,29 @@
 'use client'
 import { useState } from "react";
-import { useAgiliza } from "@/context/AgilizaContext";
+import { useAgiliza } from "@/context/AgilizaContext"; // Usando o contexto novo
 import { useNotify } from '@/context/ToastContext';
 import styles from '@/app/page.module.css';
 import API_URL from "@/config/api";
 
 export default function Checkout({ aoFechar }) {
-  // 1. Pegando 'loja' do contexto (dados que o lojista cadastrou)
-  const { carrinho, usuario, setCarrinho, loja } = useAgiliza(); 
+  // 🛡️ 1. Pegando os dados certos do contexto novo
+  const { carrinho, perfilCliente, setCarrinho, loja } = useAgiliza(); 
   const [salvando, setSalvando] = useState(false);
   const notify = useNotify();
 
-  // 2. CÁLCULOS MATEMÁTICOS NO GRAU
+  // 2. CÁLCULOS MATEMÁTICOS
   const subtotal = carrinho.reduce((acc, item) => acc + item.preco, 0);
   const taxaEntrega = loja?.taxaEntrega || 0;
   const totalGeral = subtotal + taxaEntrega;
   const valorMinimo = loja?.valorMinimo || 0;
 
   const finalizarTudo = async () => {
+    // Validações básicas
     if (carrinho.length === 0) return notify("Carrinho vazio, macho!", "warning");
-    if (!usuario.endereco) return notify("Cadastre seu endereço no Perfil primeiro!", "error");
+    if (!perfilCliente.endereco) return notify("Cadastre seu endereço no Perfil primeiro!", "error");
+    if (!loja?._id) return notify("Erro: ID da loja não encontrado.", "error");
 
-    // 3. TRAVA DO VALOR MÍNIMO (Regra de ouro!)
+    // 3. TRAVA DO VALOR MÍNIMO
     if (subtotal < valorMinimo) {
       return notify(`Vixe! O valor mínimo para pedido é de R$ ${valorMinimo.toFixed(2)}`, "error");
     }
@@ -30,35 +32,38 @@ export default function Checkout({ aoFechar }) {
     const token = localStorage.getItem('agiliza_token');
 
     try {
-      // 4. SALVANDO NO BANCO DE DADOS (Agora com ID Real)
-      const res = await fetch(`${API_URL}/api/pedidos/novo`, {
+      // 🛡️ 4. ENVIO PARA O BACKEND (Rota padrão)
+      // DICA: Verifique se sua rota no backend é /api/pedidos ou /api/pedidos/novo
+      const res = await fetch(`${API_URL}/api/pedidos`, { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          lojaId: loja._id, // Dinâmico!
+          lojaId: loja._id, 
           itens: carrinho,
           subtotal: subtotal,
           taxaEntrega: taxaEntrega,
           total: totalGeral,
           cliente: {
-            nome: usuario.nome,
-            whatsapp: usuario.telefone,
-            endereco: usuario.endereco
-          }
+            nome: perfilCliente.nome,
+            whatsapp: perfilCliente.telefone,
+            endereco: perfilCliente.endereco,
+            referencia: perfilCliente.referencia
+          },
+          pagamento: perfilCliente.pagamento
         })
       });
 
       if (res.ok) {
-        // 5. MONTA A MENSAGEM PRO WHATSAPP (Com o Zap da Loja!)
+        // 5. MENSAGEM WHATSAPP (Pegando o número da Loja)
         const itensMsg = carrinho.map(i => `- ${i.nome} (R$ ${i.preco.toFixed(2)})`).join('%0A');
         
         const mensagem = `*Novo Pedido - ${loja.loja}*%0A%0A` +
-          `*Cliente:* ${usuario.nome}%0A` +
-          `*Endereço:* ${usuario.endereco}%0A` +
-          `*Pagamento:* ${usuario.pagamento || 'Pix'}%0A%0A` +
+          `*Cliente:* ${perfilCliente.nome}%0A` +
+          `*Endereço:* ${perfilCliente.endereco}%0A` +
+          `*Pagamento:* ${perfilCliente.pagamento || 'Pix'}%0A%0A` +
           `*Itens:*%0A${itensMsg}%0A%0A` +
           `*Subtotal:* R$ ${subtotal.toFixed(2)}%0A` +
           `*Taxa de Entrega:* R$ ${taxaEntrega.toFixed(2)}%0A` +
@@ -66,16 +71,19 @@ export default function Checkout({ aoFechar }) {
 
         setCarrinho([]);
         
-        // Abre o zap da LOJA específica (usando o DDD que ela cadastrou)
-        window.open(`https://wa.me/55${loja.whatsapp}?text=${mensagem}`);
+        // Abre o zap da loja (ajustado para aceitar o campo whatsapp da loja)
+        const foneLoja = loja.whatsapp || loja.telefone;
+        window.open(`https://wa.me/55${foneLoja}?text=${mensagem}`);
         
         notify("Pedido enviado com sucesso! 🚀", "success");
         aoFechar();
       } else {
-        notify("Erro ao registrar pedido no servidor.", "error");
+        const erroData = await res.json();
+        notify(erroData.erro || "Erro ao registrar pedido no servidor.", "error");
       }
     } catch (err) {
-      notify("Vixe, deu erro na conexão!", "error");
+      console.error("Erro no Checkout:", err);
+      notify("Vixe, deu erro na conexão! Verifique se o servidor está online.", "error");
     } finally {
       setSalvando(false);
     }
@@ -90,8 +98,8 @@ export default function Checkout({ aoFechar }) {
         </header>
 
         <section className={styles.sessaoCheckout}>
-          <p><strong>Enviar para:</strong> {usuario.endereco || "Endereço não cadastrado"}</p>
-          <p><small>Ref: {usuario.referencia || "Sem referência"}</small></p>
+          <p><strong>Enviar para:</strong> {perfilCliente.endereco || "Endereço não cadastrado"}</p>
+          <p><small>Ref: {perfilCliente.referencia || "Sem referência"}</small></p>
         </section>
 
         <section className={styles.sessaoCheckout}>
@@ -107,7 +115,6 @@ export default function Checkout({ aoFechar }) {
         </section>
 
         <div className={styles.footerCheckout}>
-          {/* 6. DESCRIÇÃO DETALHADA DOS VALORES */}
           <div className={styles.resumoValores}>
             <div className={styles.linhaFinanceira}>
               <span>Subtotal:</span>

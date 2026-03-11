@@ -7,8 +7,10 @@ const AgilizaContext = createContext();
 export function AgilizaProvider({ children }) {
   const [carrinho, setCarrinho] = useState([]);
   const [pedidos, setPedidos] = useState([]);
-  const [loja, setLoja] = useState(null); // 🏢 A LOJA ATUAL (DNA da loja!)
-  const [usuario, setUsuario] = useState({
+  const [loja, setLoja] = useState(null); 
+  
+  // 🛡️ 1. DADOS DE QUEM ESTÁ COMPRANDO (Perfil de Checkout)
+  const [perfilCliente, setPerfilCliente] = useState({
     nome: '',
     telefone: '',
     endereco: '',
@@ -16,9 +18,12 @@ export function AgilizaProvider({ children }) {
     pagamento: 'Pix'
   });
 
-  // 1. SINCRONIZAÇÃO DO USUÁRIO (O que você já tinha)
+  // 🛡️ 2. DADOS DE QUEM ESTÁ LOGADO (O Dono da Loja / Admin)
+  const [usuarioLogado, setUsuarioLogado] = useState(null);
+
+  // SINCRONIZAÇÃO DO USUÁRIO LOGADO (Pelo Token)
   useEffect(() => {
-    const carregarDadosReais = async () => {
+    const carregarUsuarioLogado = async () => {
       const token = localStorage.getItem('agiliza_token');
       if (token) {
         try {
@@ -26,40 +31,41 @@ export function AgilizaProvider({ children }) {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (res.ok) {
-            const dadosDoBanco = await res.json();
-            setUsuario(prev => ({ ...dadosDoBanco, pagamento: prev.pagamento || 'Pix' }));
+            const dados = await res.json();
+            setUsuarioLogado(dados);
           }
         } catch (err) {
-          console.log("Contexto: Erro ao sincronizar com o banco.");
+          console.log("Contexto: Erro ao buscar dados do logado.");
         }
       }
     };
-    carregarDadosReais();
+
+    // Carrega também o perfil de cliente salvo no navegador (pra não ter que digitar endereço toda vez)
+    const perfilSalvo = localStorage.getItem('@Agiliza:PerfilCliente');
+    if (perfilSalvo) {
+      setPerfilCliente(JSON.parse(perfilSalvo));
+    }
+
+    carregarUsuarioLogado();
   }, []);
 
-  // 2. FUNÇÃO PARA CARREGAR OS DADOS DA LOJA (Busca frete, valor mínimo, etc)
+  // FUNÇÃO PARA CARREGAR A LOJA (Sem mexer no usuário!)
   const carregarLoja = async (slug) => {
     try {
       const res = await fetch(`${API_URL}/api/assinantes/loja/${slug}`);
       if (res.ok) {
         const dadosLoja = await res.json();
-        setLoja(dadosLoja); // Agora o contexto sabe quem é a loja!
+        setLoja(dadosLoja); 
       }
     } catch (err) {
       console.error("Erro ao carregar dados da loja:", err);
     }
   };
 
-  const atualizarPerfil = (novosDados) => {
-    setUsuario(novosDados);
-    localStorage.setItem('@Agiliza:Perfil', JSON.stringify(novosDados));
+  const atualizarPerfilCliente = (novosDados) => {
+    setPerfilCliente(novosDados);
+    localStorage.setItem('@Agiliza:PerfilCliente', JSON.stringify(novosDados));
   };
-
-  const salvarPedido = (novoPedido) => {
-    const novoHistorico = [novoPedido, ...pedidos];
-    setPedidos(novoHistorico);
-    setCarrinho([]); 
-  }
 
   const adicionarAoCarrinho = (produto) => {
     setCarrinho(prev => [...prev, { ...produto, idUnico: Date.now() }]);
@@ -68,18 +74,19 @@ export function AgilizaProvider({ children }) {
   const removerDoCarrinho = (idUnico) => {
     setCarrinho(prev => prev.filter(item => item.idUnico !== idUnico));
   };
+
   return (
     <AgilizaContext.Provider value={{ 
       carrinho, 
       setCarrinho, 
       adicionarAoCarrinho, 
       removerDoCarrinho, 
-      usuario,
-      setUsuario,
-      atualizarPerfil,
-      pedidos,
-      salvarPedido,
-      loja,       // 👈 Disponível para o Checkout!
+      perfilCliente,      // 👈 Para o Checkout
+      setPerfilCliente,
+      atualizarPerfilCliente,
+      usuarioLogado,      // 👈 Para saber quem está logado (Admin/Lojista)
+      setUsuarioLogado,
+      loja,
       setLoja,
       carregarLoja
     }}>

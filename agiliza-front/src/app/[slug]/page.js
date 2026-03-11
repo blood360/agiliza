@@ -5,13 +5,20 @@ import styles from '@/app/page.module.css';
 import ListaProdutosGrid from '@/components/ListaProdutosGrid';
 import MenuInferior from '@/components/MenuInferior';
 import BotaoCompartilhar from '@/components/BotaoCompartilhar';
-import { useAgiliza } from "@/context/AgilizaContext";
+import { useAgiliza } from "@/context/AgilizaContext"; // 👈 Contexto atualizado
 import { useNotify } from '@/context/ToastContext';
 import Checkout from '@/components/Checkout';
 import API_URL from '@/config/api';
 
 export default function HomeLoja() {
-  const { carrinho, adicionarAoCarrinho } = useAgiliza();
+  // 🛡️ 1. Pegando as peças certas do "tabuleiro" (Contexto)
+  const { 
+    carrinho, 
+    adicionarAoCarrinho, 
+    setLoja, // 👈 Importante para o Checkout saber quem é a loja
+    perfilCliente 
+  } = useAgiliza();
+
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug;
@@ -23,7 +30,7 @@ export default function HomeLoja() {
   const [lojaEstaAberta, setLojaEstaAberta] = useState(true);
   const [carregando, setCarregando] = useState(true);
 
-  // 🛡️ 1. FUNÇÃO MESTRA: Busca dados da Loja e Produtos
+  // 🛡️ 2. FUNÇÃO MESTRA: Busca dados da Loja e Produtos
   const carregarDadosDaLoja = useCallback(async () => {
     if (!slug) return;
 
@@ -44,7 +51,11 @@ export default function HomeLoja() {
         return;
       }
 
+      // 🎯 AQUI ESTÁ O PULO DO GATO:
+      // Salvamos os dados da loja no estado LOCAL da página E no CONTEXTO
       setConfigsLocal(dadosDaLoja);
+      setLoja(dadosDaLoja); // 👈 Isso avisa o Checkout quem é a loja atual
+      
       setLojaEstaAberta(dadosDaLoja.status_loja !== 'fechada');
 
       // B. Busca os produtos reais dessa loja específica
@@ -52,8 +63,6 @@ export default function HomeLoja() {
       const listaProdutos = await resProdutos.json();
       
       if (Array.isArray(listaProdutos)) {
-        // 🔍 DEDO-DURO: Log para ver se a imagem está vindo no console
-        console.log("Produtos carregados:", listaProdutos);
         setProdutosReais(listaProdutos);
       }
 
@@ -63,9 +72,9 @@ export default function HomeLoja() {
     } finally {
       setCarregando(false);
     }
-  }, [slug, router, notify]);
+  }, [slug, router, notify, setLoja]);
 
-  // 🔄 2. EFEITO DE ENTRADA
+  // 🔄 3. EFEITO DE ENTRADA
   useEffect(() => {
     carregarDadosDaLoja();
   }, [carregarDadosDaLoja]);
@@ -75,6 +84,13 @@ export default function HomeLoja() {
   const abrirCheckout = () => {
     if (!lojaEstaAberta) return notify("Vixe, macho! A loja está fechada agora. 🚫", "warning");
     if (carrinho.length === 0) return notify("Adicione um produto antes de finalizar! 🛒", "warning");
+    
+    // 🛡️ Verifica se o cliente tem endereço antes de abrir
+    if (!perfilCliente.endereco) {
+      notify("Macho, cadê teu endereço? Atualiza lá no Perfil! 📍", "warning");
+      // Opcional: router.push('/perfil');
+    }
+    
     setIsModalOpen(true);
   };
 
@@ -94,7 +110,6 @@ export default function HomeLoja() {
 
   return (
     <main className={styles.containerLoja}>
-      {/* Banner de Status */}
       <div className={lojaEstaAberta ? styles.bannerAviso : styles.bannerFechado}>
         <span>{lojaEstaAberta ? `✅ Aberto agora: ${nomeExibicao}` : "🚫 ESTAMOS FECHADOS NO MOMENTO"}</span>
       </div>
@@ -107,12 +122,10 @@ export default function HomeLoja() {
         <BotaoCompartilhar />
       </header>
 
-      {/* 🚀 LISTAGEM DE PRODUTOS COM TRATAMENTO DE IMAGEM */}
       {produtosReais.length > 0 ? (
         <ListaProdutosGrid 
           produtos={produtosReais.map(p => ({
             ...p,
-            // Garante que a imagem é tratada corretamente, seja URL ou Base64
             imagem: p.imagem || '/placeholder.png' 
           }))} 
           onAdd={adicionarAoCarrinho} 
@@ -123,19 +136,14 @@ export default function HomeLoja() {
         </div>
       )}
 
-      {/* Botão Flutuante do Carrinho */}
       {carrinho.length > 0 && !isModalOpen && (
         <button onClick={abrirCheckout} className={styles.btnFlutuanteCarrinho}>
           🛒 Ver Carrinho (R$ {totalPedido.toFixed(2)})
         </button>
       )}
 
-      {/* Modal de Finalização */}
       {isModalOpen && (
-        <Checkout 
-          aoFechar={() => setIsModalOpen(false)} 
-          lojaId={configsLocal?._id} 
-        />
+        <Checkout aoFechar={() => setIsModalOpen(false)} />
       )}
 
       <MenuInferior />
