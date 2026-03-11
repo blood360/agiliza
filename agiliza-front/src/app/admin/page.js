@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // 👈 Adicionei o useCallback
 import Image from 'next/image';
 import styles from './admin.module.css';
 import Link from 'next/link';
@@ -14,67 +14,61 @@ export default function DashboardAdmin() {
   const [carregando, setCarregando] = useState(true);
   const notify = useNotify();
 
-  useEffect(() => {
-    const carregarTudo = async () => {
-      try {
-        const userJson = localStorage.getItem('@Agiliza:Usuario');
-        
-        // 🛡️ TRAVA 1: Se não tem usuário, manda pro login
-        if (!userJson) {
-           window.location.href = '/login';
-           return;
-        }
-        
-        const usuario = JSON.parse(userJson);
-        const lojaId = usuario.lojaId;
+  // 🛡️ 1. FUNÇÃO MESTRA (Agora fora do useEffect pra ninguém se perder)
+  const carregarTudo = useCallback(async () => {
+    try {
+      const userJson = localStorage.getItem('@Agiliza:Usuario');
+      if (!userJson) {
+         window.location.href = '/login';
+         return;
+      }
+      
+      const usuario = JSON.parse(userJson);
+      const lojaId = usuario.lojaId;
 
-        // 🛡️ TRAVA 2: Evita buscar se o ID for nulo ou string "null"
-        if (!lojaId || lojaId === "null" || lojaId === "undefined") {
-          setCarregando(false);
-          return;
-        }
+      if (!lojaId || lojaId === "null" || lojaId === "undefined") {
+        setCarregando(false);
+        return;
+      }
 
-        // A. Busca dados da Loja
-        const resLoja = await fetch(`${API_URL}/api/assinantes/${lojaId}`);
-        
-        // Se a resposta não for OK (ex: 404), não tenta ler o JSON
-        if (!resLoja.ok) {
-           console.warn("Loja ainda não encontrada no banco...");
-           return;
-        }
-        
+      // A. Busca dados da Loja
+      const resLoja = await fetch(`${API_URL}/api/assinantes/${lojaId}`);
+      if (resLoja.ok) {
         const dadosLoja = await resLoja.json();
         setLoja(dadosLoja);
         setLojaAberta(dadosLoja.status_loja !== 'fechada');
-
-        // B. Busca Pedidos da Loja
-        const resPedidos = await fetch(`${API_URL}/api/pedidos?lojaId=${lojaId}`);
-        
-        if (resPedidos.ok) {
-          const novosPedidos = await resPedidos.json();
-          
-          // 🛡️ TRAVA 3: Garante que novosPedidos é um Array antes de comparar
-          if (Array.isArray(novosPedidos)) {
-            if (novosPedidos.length > pedidos.length && novosPedidos.some(p => p.status === 'Pendente')) {
-              new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
-            }
-            setPedidos(novosPedidos);
-          }
-        }
-
-      } catch (err) {
-        console.error("Erro ao carregar dashboard:", err);
-      } finally {
-        setCarregando(false);
       }
-    };
 
+      // B. Busca Pedidos da Loja
+      const resPedidos = await fetch(`${API_URL}/api/pedidos?lojaId=${lojaId}`);
+      if (resPedidos.ok) {
+        const novosPedidos = await resPedidos.json();
+        if (Array.isArray(novosPedidos)) {
+          // Som de alerta para novos pedidos
+          if (novosPedidos.length > pedidos.length && novosPedidos.some(p => p.status === 'Pendente')) {
+            new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
+          }
+          setPedidos(novosPedidos);
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar dados:", err);
+    } finally {
+      setCarregando(false);
+    }
+  }, [pedidos.length]); // Só recria se a quantidade de pedidos mudar
+
+  // 🔄 2. O MONITOR (Chama a função a cada 10 segundos)
+  useEffect(() => {
     carregarTudo();
-    const intervalo = setInterval(carregarTudo, 10000); 
-    return () => clearInterval(intervalo);
-  }, [pedidos.length]);
+    const intervalo = setInterval(() => {
+      carregarTudo();
+    }, 10000); 
 
-  // --- Funções de Controle (Mantidas Exatamente como as suas) ---
+    return () => clearInterval(intervalo);
+  }, [carregarTudo]); // Depende da função carregarTudo
+
+  // --- Funções de Controle (Mantidas as suas, só com segurança extra) ---
   const toggleLoja = async () => {
     if (!loja?._id) return;
     const novoStatus = lojaAberta ? 'fechada' : 'aberta';
@@ -89,7 +83,7 @@ export default function DashboardAdmin() {
         notify(lojaAberta ? "Loja Fechada! 🔒" : "Loja Aberta! 🚀", "success");
       }
     } catch (err) {
-      notify("Erro ao mudar status da loja", "error");
+      notify("Erro ao mudar status", "error");
     }
   };
 
@@ -101,11 +95,11 @@ export default function DashboardAdmin() {
         body: JSON.stringify({ status: novoStatus })
       });
       if (res.ok) {
-        setPedidos(pedidos.map(p => p._id === id ? { ...p, status: novoStatus } : p));
-        notify(`Pedido movido para ${novoStatus}!`, "success");
+        setPedidos(prev => prev.map(p => p._id === id ? { ...p, status: novoStatus } : p));
+        notify(`Pedido: ${novoStatus}!`, "success");
       }
     } catch (err) {
-      notify("Erro ao atualizar pedido", "error");
+      notify("Erro ao atualizar", "error");
     }
   };
 

@@ -37,11 +37,25 @@ export default function NovoProduto() {
   const handleImagem = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setPreview(URL.createObjectURL(file));
-      
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm({ ...form, imagem: reader.result }); // Salva a string da imagem
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800; // Largura máxima de 800px (já tá ótimo pra web)
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // Transforma em Base64 mas com qualidade 0.7 (comprime 30%)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          setPreview(dataUrl);
+          setForm({ ...form, imagem: dataUrl });
+        };
       };
       reader.readAsDataURL(file);
     }
