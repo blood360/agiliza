@@ -2,36 +2,36 @@
 import { useState, useEffect } from 'react';
 import styles from './perfil-admin.module.css';
 import Link from 'next/link';
-import { useNotify } from '@/context/ToastContext'; // Usando seu Toast
+import { useNotify } from '@/context/ToastContext';
 import API_URL from '@/config/api';
 
 export default function ConfigurarLoja() {
   const notify = useNotify();
   const [carregando, setCarregando] = useState(true);
+  const [lojaIdReal, setLojaIdReal] = useState(null); // 👈 Guardamos o ID aqui
   
   const [config, setConfig] = useState({
     loja: '',
     whatsapp: '',
     slug: '',
-    valorMinimo: 0, // 💰 Novo campo!
-    taxaEntrega: 0  // 🚚 Novo campo!
+    valorMinimo: 0,
+    taxaEntrega: 0
   });
 
-  const [logoPreview, setLogoPreview] = useState(null);
-
-  // 1. BUSCA OS DADOS REAIS DO BANCO AO ENTRAR
   useEffect(() => {
     const carregarDados = async () => {
       const token = localStorage.getItem('agiliza_token');
       try {
-        // Buscamos o perfil do usuário logado que contém o lojaId
         const resUser = await fetch(`${API_URL}/api/usuarios/perfil`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const user = await resUser.json();
 
         if (user.lojaId) {
-          const resLoja = await fetch(`${API_URL}/api/assinantes/loja-id/${user.lojaId}`);
+          setLojaIdReal(user.lojaId); // 👈 Salvamos pra usar depois
+          
+          // 🛡️ CONFIRME SE A ROTA É ESSA MESMO OU APENAS /api/assinantes/${user.lojaId}
+          const resLoja = await fetch(`${API_URL}/api/assinantes/${user.lojaId}`);
           const dadosLoja = await resLoja.json();
           
           setConfig({
@@ -51,19 +51,13 @@ export default function ConfigurarLoja() {
     carregarDados();
   }, []);
 
-  // 2. FUNÇÃO PARA SALVAR NO BANCO DE DADOS (PUT)
   const salvarConfiguracoes = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('agiliza_token');
     
     try {
-      // Pegamos o ID do usuário para saber qual loja atualizar
-      const resUser = await fetch(`${API_URL}/api/usuarios/perfil`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const user = await resUser.json();
-
-      const res = await fetch(`${API_URL}/api/assinantes/${user.lojaId}`, {
+      // Agora usamos o lojaIdReal que já temos guardado
+      const res = await fetch(`${API_URL}/api/assinantes/${lojaIdReal}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -71,7 +65,6 @@ export default function ConfigurarLoja() {
         },
         body: JSON.stringify({
           ...config,
-          // Garante que salve como número para os cálculos funcionarem
           valorMinimo: Number(config.valorMinimo),
           taxaEntrega: Number(config.taxaEntrega)
         })
