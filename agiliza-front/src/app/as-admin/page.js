@@ -10,7 +10,7 @@ export default function MasterDashboard() {
   const notify = useNotify();
   const [abaAtiva, setAbaAtiva] = useState('assinantes');
   const [isModalNovo, setIsModalNovo] = useState(false);
-  const [novoAssinante, setNovoAssinante] = useState({ loja: '', dono: '', plano: 'Iniciante' });
+  const [novoAssinante, setNovoAssinante] = useState({ loja: '', dono: '', plano: 'Iniciante', cencimento: '' });
 
 
   useEffect(() => {
@@ -260,10 +260,25 @@ export default function MasterDashboard() {
             <form onSubmit={handleCriarAcesso}>
               <input type="text" placeholder="Nome da Loja" value={novoAssinante.loja} onChange={(e) => setNovoAssinante({...novoAssinante, loja: e.target.value})} required />
               <input type="text" placeholder="Nome do Dono" value={novoAssinante.dono} onChange={(e) => setNovoAssinante({...novoAssinante, dono: e.target.value})} required />
+              
+              <div className={styles.campoData}>
+                <label style={{display: 'block', marginBottom: '5px', fontSize: '14px', color: '#666'}}>
+                  Data de Vencimento:
+                </label>
+                <input 
+                  type="date" 
+                  value={novoAssinante.vencimento} 
+                  onChange={(e) => setNovoAssinante({...novoAssinante, vencimento: e.target.value})} 
+                  required 
+                  style={{width: '100%', padding: '10px', marginBottom: '15px'}}
+                />
+              </div>
+
               <select value={novoAssinante.plano} onChange={(e) => setNovoAssinante({...novoAssinante, plano: e.target.value})}>
                 <option value="Iniciante">Iniciante (R$ 49,90)</option>
                 <option value="Pro">Pro (R$ 89,90)</option>
               </select>
+              
               <div className={styles.modalBotoes}>
                 <button type="submit" className={styles.btnConfirmar}>Criar e Liberar</button>
                 <button type="button" onClick={() => setIsModalNovo(false)} className={styles.btnCancelar}>Fechar</button>
