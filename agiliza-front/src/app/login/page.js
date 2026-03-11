@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './login.module.css';
 import { useNotify } from '@/context/ToastContext';
-import API_URL from '@/config/api'; // Importando a configuração certa
+import API_URL from '@/config/api'; 
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -19,31 +19,37 @@ export default function LoginPage() {
     setCarregando(true);
 
     try {
-      // MUDANÇA AQUI: Trocamos o localhost pela variável API_URL
       const response = await fetch(`${API_URL}/api/usuarios/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha })
+        // 🛡️ LIMPANDO OS DADOS ANTES DE MANDAR (Igual fizemos no registro)
+        body: JSON.stringify({ 
+          email: email.trim().toLowerCase(), 
+          senha: senha 
+        })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Frase de efeito que você pediu!
         notify("Seja bem-vindo ao Agiliza - Sua venda na velocidade da luz! 🚀", "success");
         
-        // Salvando o token e dados se necessário (opcional, mas recomendado)
         if (data.token) {
            localStorage.setItem('agiliza_token', data.token);
+           // Opcional: Salvar os dados do usuário para uso rápido
+           localStorage.setItem('@Agiliza:Usuario', JSON.stringify(data.usuario));
         }
 
         setTimeout(() => {
-          if (data.usuario.tipo === 'lojista') {
-            router.push('/as-admin');
+          // 🚀 LÓGICA DE REDIRECIONAMENTO CORRIGIDA
+          if (data.usuario.tipo === 'admin') {
+            router.push('/as-admin'); // Você, o dono da AS
+          } else if (data.usuario.tipo === 'lojista') {
+            router.push('/admin');    // O seu cliente (Lojista)
           } else {
-            router.push('/explorar');
+            router.push('/explorar'); // O cliente final
           }
-        }, 1500); // Um tempinho pro cabra ler a mensagem de sucesso
+        }, 1500); 
       } else {
         setCarregando(false);
         notify(data.erro || "E-mail ou senha incorretos.", "error");
@@ -75,7 +81,6 @@ export default function LoginPage() {
         <div className={styles.inputGroup}>
           <input 
             type="email" 
-            name="email_agiliza" 
             placeholder="exemplo@email.com" 
             value={email} 
             onChange={(e) => setEmail(e.target.value)} 
@@ -87,7 +92,6 @@ export default function LoginPage() {
           <div className={styles.passwordWrapper}>
             <input 
               type={verSenha ? "text" : "password"} 
-              name="senha_agiliza" 
               placeholder="sua senha aqui" 
               value={senha} 
               onChange={(e) => setSenha(e.target.value)} 
@@ -106,7 +110,7 @@ export default function LoginPage() {
         <button type="submit" className={styles.btnEntrar}>Acessar Conta</button>
         
         <p className={styles.linkRegister}>
-          Não tem cadastro? <Link href="/register">Registre-se aqui</Link>
+          Não tem cadastro? <Link href="/admin/registrar">Crie sua conta de Lojista</Link>
         </p>
       </form>
     </div>

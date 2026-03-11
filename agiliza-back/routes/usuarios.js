@@ -128,28 +128,43 @@ router.put('/perfil', auth, async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
-        const usuario = await Usuario.findOne({ email });
-        if (!usuario) return res.status(400).json({ erro: "E-mail ou senha incorretos." });
+        
+        // 1. Garante que o email seja tratado igual no registro
+        const emailLimpo = email.trim().toLowerCase();
+        
+        // 2. Busca o cabra no banco
+        const usuario = await Usuario.findOne({ email: emailLimpo });
+        
+        if (!usuario) {
+            return res.status(400).json({ erro: "E-mail ou senha incorretos." });
+        }
 
+        // 3. Compara a senha (bcryptjs já importado no topo)
         const senhaValida = await bcrypt.compare(senha, usuario.senha);
-        if (!senhaValida) return res.status(400).json({ erro: "E-mail ou senha incorretos." });
+        if (!senhaValida) {
+            return res.status(400).json({ erro: "E-mail ou senha incorretos." });
+        }
 
+        // 4. Gera o Token com ID e Tipo
         const token = jwt.sign(
             { id: usuario._id, tipo: usuario.tipo },
             process.env.JWT_SECRET || 'secret_as_automacoes',
             { expiresIn: '7d' }
         );
 
+        // 5. RESPOSTA PARA O FRONTEND (Com o lojaId!)
         res.json({
             token,
             usuario: {
                 id: usuario._id,
                 nome: usuario.nome,
                 tipo: usuario.tipo,
-                email: usuario.email
+                email: usuario.email,
+                lojaId: usuario.lojaId // 👈 ESSENCIAL: Pro dashboard saber quem é a loja!
             }
         });
     } catch (err) {
+        console.error("Erro no servidor no Login:", err.message);
         res.status(500).json({ erro: "Erro no servidor: " + err.message });
     }
 });
