@@ -7,6 +7,7 @@ const AgilizaContext = createContext();
 export function AgilizaProvider({ children }) {
   const [carrinho, setCarrinho] = useState([]);
   const [pedidos, setPedidos] = useState([]);
+  const [loja, setLoja] = useState(null); // 🏢 A LOJA ATUAL (DNA da loja!)
   const [usuario, setUsuario] = useState({
     nome: '',
     telefone: '',
@@ -15,8 +16,7 @@ export function AgilizaProvider({ children }) {
     pagamento: 'Pix'
   });
 
-  // 🛡️ SINCRONIZAÇÃO COM O BANCO DE DADOS
-  // Quando o app abre, ele busca o Perfil Real do Banco de Dados
+  // 1. SINCRONIZAÇÃO DO USUÁRIO (O que você já tinha)
   useEffect(() => {
     const carregarDadosReais = async () => {
       const token = localStorage.getItem('agiliza_token');
@@ -27,21 +27,28 @@ export function AgilizaProvider({ children }) {
           });
           if (res.ok) {
             const dadosDoBanco = await res.json();
-            // Mantém o pagamento que já estava selecionado ou usa o padrão
             setUsuario(prev => ({ ...dadosDoBanco, pagamento: prev.pagamento || 'Pix' }));
           }
         } catch (err) {
           console.log("Contexto: Erro ao sincronizar com o banco.");
         }
-      } else {
-        // Se não tiver logado, tenta o localStorage como plano B
-        const dadosSalvos = localStorage.getItem('@Agiliza:Perfil');
-        if (dadosSalvos) setUsuario(JSON.parse(dadosSalvos));
       }
     };
-
     carregarDadosReais();
   }, []);
+
+  // 2. FUNÇÃO PARA CARREGAR OS DADOS DA LOJA (Busca frete, valor mínimo, etc)
+  const carregarLoja = async (slug) => {
+    try {
+      const res = await fetch(`${API_URL}/api/assinantes/loja/${slug}`);
+      if (res.ok) {
+        const dadosLoja = await res.json();
+        setLoja(dadosLoja); // Agora o contexto sabe quem é a loja!
+      }
+    } catch (err) {
+      console.error("Erro ao carregar dados da loja:", err);
+    }
+  };
 
   const atualizarPerfil = (novosDados) => {
     setUsuario(novosDados);
@@ -51,23 +58,16 @@ export function AgilizaProvider({ children }) {
   const salvarPedido = (novoPedido) => {
     const novoHistorico = [novoPedido, ...pedidos];
     setPedidos(novoHistorico);
-    localStorage.setItem('@Agiliza:Pedidos', JSON.stringify(novoHistorico));
-    setCarrinho([]); // Limpa o carrinho após a venda!
+    setCarrinho([]); 
   }
 
   const adicionarAoCarrinho = (produto) => {
-    // Adiciona o produto com um ID único para evitar confusão no Checkout
     setCarrinho(prev => [...prev, { ...produto, idUnico: Date.now() }]);
   };
 
   const removerDoCarrinho = (idUnico) => {
     setCarrinho(prev => prev.filter(item => item.idUnico !== idUnico));
   };
-
-  const atualizarPagamento = (metodo) => {
-    setUsuario(prev => ({ ...prev, pagamento: metodo }));
-  }
-
   return (
     <AgilizaContext.Provider value={{ 
       carrinho, 
@@ -75,11 +75,13 @@ export function AgilizaProvider({ children }) {
       adicionarAoCarrinho, 
       removerDoCarrinho, 
       usuario,
-      setUsuario, // Adicionado para dar mais flexibilidade
+      setUsuario,
       atualizarPerfil,
-      atualizarPagamento,
       pedidos,
-      salvarPedido
+      salvarPedido,
+      loja,       // 👈 Disponível para o Checkout!
+      setLoja,
+      carregarLoja
     }}>
       {children}
     </AgilizaContext.Provider>

@@ -2,54 +2,92 @@
 import { useState, useEffect } from 'react';
 import styles from './perfil-admin.module.css';
 import Link from 'next/link';
+import { useNotify } from '@/context/ToastContext'; // Usando seu Toast
+import API_URL from '@/config/api';
 
 export default function ConfigurarLoja() {
+  const notify = useNotify();
+  const [carregando, setCarregando] = useState(true);
+  
   const [config, setConfig] = useState({
-    nomeLoja: 'Depósito do Adriano',
-    whatsapp: '5521980867488',
-    slug: 'deposito-adriano'
+    loja: '',
+    whatsapp: '',
+    slug: '',
+    valorMinimo: 0, // 💰 Novo campo!
+    taxaEntrega: 0  // 🚚 Novo campo!
   });
 
   const [logoPreview, setLogoPreview] = useState(null);
 
-  // 1. CARREGA OS DADOS SALVOS ASSIM QUE ENTRA NA PÁGINA
+  // 1. BUSCA OS DADOS REAIS DO BANCO AO ENTRAR
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const dadosSalvos = localStorage.getItem('agiliza_config_loja');
-      if (dadosSalvos) {
-        const parsed = JSON.parse(dadosSalvos);
-        setConfig({
-          nomeLoja: parsed.nomeLoja,
-          whatsapp: parsed.whatsapp,
-          slug: parsed.slug
+    const carregarDados = async () => {
+      const token = localStorage.getItem('agiliza_token');
+      try {
+        // Buscamos o perfil do usuário logado que contém o lojaId
+        const resUser = await fetch(`${API_URL}/api/usuarios/perfil`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (parsed.logo) setLogoPreview(parsed.logo);
+        const user = await resUser.json();
+
+        if (user.lojaId) {
+          const resLoja = await fetch(`${API_URL}/api/assinantes/loja-id/${user.lojaId}`);
+          const dadosLoja = await resLoja.json();
+          
+          setConfig({
+            loja: dadosLoja.loja,
+            whatsapp: dadosLoja.whatsapp,
+            slug: dadosLoja.slug,
+            valorMinimo: dadosLoja.valorMinimo || 0,
+            taxaEntrega: dadosLoja.taxaEntrega || 0
+          });
+        }
+      } catch (err) {
+        notify("Vixe, erro ao carregar seus dados!", "error");
+      } finally {
+        setCarregando(false);
       }
-    }
+    };
+    carregarDados();
   }, []);
 
-  // 2. FUNÇÃO PARA LER A IMAGEM E GERAR A PRÉVIA
-  const handleLogoChange = (e) => {
-    const arquivo = e.target.files[0];
-    if (arquivo) {
-      const leitor = new FileReader();
-      leitor.onloadend = () => {
-        setLogoPreview(leitor.result);
-      };
-      leitor.readAsDataURL(arquivo);
+  // 2. FUNÇÃO PARA SALVAR NO BANCO DE DADOS (PUT)
+  const salvarConfiguracoes = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('agiliza_token');
+    
+    try {
+      // Pegamos o ID do usuário para saber qual loja atualizar
+      const resUser = await fetch(`${API_URL}/api/usuarios/perfil`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const user = await resUser.json();
+
+      const res = await fetch(`${API_URL}/api/assinantes/${user.lojaId}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...config,
+          // Garante que salve como número para os cálculos funcionarem
+          valorMinimo: Number(config.valorMinimo),
+          taxaEntrega: Number(config.taxaEntrega)
+        })
+      });
+
+      if (res.ok) {
+        notify("Loja atualizada no banco de dados, patrão! 🚀", "success");
+      } else {
+        notify("Erro ao salvar no servidor.", "error");
+      }
+    } catch (err) {
+      notify("Macho, deu erro na conexão!", "error");
     }
   };
 
-  // 3. SALVA TUDO NO LOCALSTORAGE
-  const salvarConfiguracoes = (e) => {
-    e.preventDefault();
-    const dadosDaLoja = {
-      ...config,
-      logo: logoPreview
-    };
-    localStorage.setItem('agiliza_config_loja', JSON.stringify(dadosDaLoja));
-    alert("Loja atualizada com sucesso, meu patrão! 🚀");
-  };
+  if (carregando) return <p style={{padding: '20px'}}>Carregando as configurações, aguarde um tiquinho...</p>;
 
   return (
     <div className={styles.container}>
@@ -58,74 +96,66 @@ export default function ConfigurarLoja() {
         <h1>Configurações da Loja</h1>
       </header>
 
-      {/* FORMULÁRIO ÚNICO (Sem ninho de cobra agora!) */}
       <form onSubmit={salvarConfiguracoes} className={styles.form}>
         
+        {/* SEÇÃO 1: IDENTIDADE */}
         <section className={styles.secao}>
-          <h2>Identidade Visual</h2>
-          
-          <div className={styles.uploadArea}> {/* Corrigido o erro de digitação 'uplpoadArea' */}
-            <label>Logo da Loja</label>
-            <div className={styles.logoCircle}>
-              {logoPreview ? (
-                <img src={logoPreview} alt="Preview da Logo"/>
-              ) : (
-                <span>Sua Logo</span>
-              )}
-            </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleLogoChange}
-              id="upload-logo"
-              hidden
-            />
-            <label htmlFor='upload-logo' className={styles.btnUpload}>
-              Escolher imagem 📷
-            </label>
-          </div>
-
+          <h2>Identidade e Link</h2>
           <div className={styles.campo}>
             <label>Nome da Loja</label>
             <input 
               type="text" 
-              value={config.nomeLoja}
-              onChange={(e) => setConfig({...config, nomeLoja: e.target.value})}
+              value={config.loja}
+              onChange={(e) => setConfig({...config, loja: e.target.value})}
               required
             />
           </div>
-
           <div className={styles.campo}>
-            <label>Link da Loja (slug)</label>
-            <div className={styles.inputSlug}>
-              <span>agiliza.vercel.app/</span>
-              <input 
-                type="text" 
-                value={config.slug}
-                onChange={(e) => setConfig({...config, slug: e.target.value})}
-                required
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.secao}>
-          <h2>Contato de Vendas</h2>
-          <div className={styles.campo}>
-            <label>WhatsApp (com DDD)</label>
+            <label>WhatsApp de Vendas</label>
             <input 
               type="text" 
               value={config.whatsapp}
               onChange={(e) => setConfig({...config, whatsapp: e.target.value})}
-              placeholder="Ex: 5521999999999"
               required
             />
-            <small>Os pedidos chegarão direto nesse número.</small>
+          </div>
+        </section>
+
+        {/* SEÇÃO 2: REGRAS DE NEGÓCIO (O QUE TU PEDIU!) */}
+        <section className={styles.secao}>
+          <h2>Regras de Entrega e Venda 💰</h2>
+          
+          <div className={styles.gridConfig}>
+            <div className={styles.campo}>
+              <label>Valor Mínimo do Pedido (R$)</label>
+              <input 
+                type="number" 
+                step="0.01"
+                value={config.valorMinimo}
+                onChange={(e) => setConfig({...config, valorMinimo: e.target.value})}
+                placeholder="Ex: 50.00"
+                required
+              />
+              <small>O cliente não conseguirá finalizar se o carrinho for menor que isso.</small>
+            </div>
+
+            <div className={styles.campo}>
+              <label>Taxa de Entrega Fixa (R$)</label>
+              <input 
+                type="number" 
+                step="0.01"
+                value={config.taxaEntrega}
+                onChange={(e) => setConfig({...config, taxaEntrega: e.target.value})}
+                placeholder="Ex: 7.00"
+                required
+              />
+              <small>Esse valor será somado ao total no carrinho.</small>
+            </div>
           </div>
         </section>
 
         <button type="submit" className={styles.btnSalvar}>
-          Atualizar Minha Loja 💾
+          Salvar Configurações no Banco 💾
         </button>
       </form>
     </div>

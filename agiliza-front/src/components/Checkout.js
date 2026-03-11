@@ -6,22 +6,31 @@ import styles from '@/app/page.module.css';
 import API_URL from "@/config/api";
 
 export default function Checkout({ aoFechar }) {
-  // Pegando os dados REAIS do contexto global
-  const { carrinho, usuario, setCarrinho } = useAgiliza();
+  // 1. Pegando 'loja' do contexto (dados que o lojista cadastrou)
+  const { carrinho, usuario, setCarrinho, loja } = useAgiliza(); 
   const [salvando, setSalvando] = useState(false);
   const notify = useNotify();
 
-  const total = carrinho.reduce((acc, item) => acc + item.preco, 0);
+  // 2. CÁLCULOS MATEMÁTICOS NO GRAU
+  const subtotal = carrinho.reduce((acc, item) => acc + item.preco, 0);
+  const taxaEntrega = loja?.taxaEntrega || 0;
+  const totalGeral = subtotal + taxaEntrega;
+  const valorMinimo = loja?.valorMinimo || 0;
 
   const finalizarTudo = async () => {
     if (carrinho.length === 0) return notify("Carrinho vazio, macho!", "warning");
     if (!usuario.endereco) return notify("Cadastre seu endereço no Perfil primeiro!", "error");
 
+    // 3. TRAVA DO VALOR MÍNIMO (Regra de ouro!)
+    if (subtotal < valorMinimo) {
+      return notify(`Vixe! O valor mínimo para pedido é de R$ ${valorMinimo.toFixed(2)}`, "error");
+    }
+
     setSalvando(true);
     const token = localStorage.getItem('agiliza_token');
 
     try {
-      // 1. SALVANDO NO BANCO DE DADOS (MONGODB)
+      // 4. SALVANDO NO BANCO DE DADOS (Agora com ID Real)
       const res = await fetch(`${API_URL}/api/pedidos/novo`, {
         method: 'POST',
         headers: {
@@ -29,9 +38,11 @@ export default function Checkout({ aoFechar }) {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          lojaId: "679d67efec75f5605f63be74", // Substitua pelo ID real da sua loja no banco
+          lojaId: loja._id, // Dinâmico!
           itens: carrinho,
-          total: total,
+          subtotal: subtotal,
+          taxaEntrega: taxaEntrega,
+          total: totalGeral,
           cliente: {
             nome: usuario.nome,
             whatsapp: usuario.telefone,
@@ -41,25 +52,30 @@ export default function Checkout({ aoFechar }) {
       });
 
       if (res.ok) {
-        // 2. MONTA A MENSAGEM PRO WHATSAPP
+        // 5. MONTA A MENSAGEM PRO WHATSAPP (Com o Zap da Loja!)
         const itensMsg = carrinho.map(i => `- ${i.nome} (R$ ${i.preco.toFixed(2)})`).join('%0A');
-        const mensagem = `*Novo Pedido - Agiliza*%0A%0A` +
+        
+        const mensagem = `*Novo Pedido - ${loja.loja}*%0A%0A` +
           `*Cliente:* ${usuario.nome}%0A` +
           `*Endereço:* ${usuario.endereco}%0A` +
           `*Pagamento:* ${usuario.pagamento || 'Pix'}%0A%0A` +
           `*Itens:*%0A${itensMsg}%0A%0A` +
-          `*Total: R$ ${total.toFixed(2)}*`;
+          `*Subtotal:* R$ ${subtotal.toFixed(2)}%0A` +
+          `*Taxa de Entrega:* R$ ${taxaEntrega.toFixed(2)}%0A` +
+          `*Total Geral: R$ ${totalGeral.toFixed(2)}*`;
 
-        // 3. LIMPA O CARRINHO E ABRE O ZAP
         setCarrinho([]);
-        window.open(`https://wa.me/5521980867488?text=${mensagem}`);
+        
+        // Abre o zap da LOJA específica (usando o DDD que ela cadastrou)
+        window.open(`https://wa.me/55${loja.whatsapp}?text=${mensagem}`);
+        
         notify("Pedido enviado com sucesso! 🚀", "success");
         aoFechar();
       } else {
         notify("Erro ao registrar pedido no servidor.", "error");
       }
     } catch (err) {
-      notify("Erro de conexão com a AS Automações.", "error");
+      notify("Vixe, deu erro na conexão!", "error");
     } finally {
       setSalvando(false);
     }
@@ -91,16 +107,29 @@ export default function Checkout({ aoFechar }) {
         </section>
 
         <div className={styles.footerCheckout}>
+          {/* 6. DESCRIÇÃO DETALHADA DOS VALORES */}
+          <div className={styles.resumoValores}>
+            <div className={styles.linhaFinanceira}>
+              <span>Subtotal:</span>
+              <span>R$ {subtotal.toFixed(2)}</span>
+            </div>
+            <div className={styles.linhaFinanceira}>
+              <span>Taxa de Entrega:</span>
+              <span>R$ {taxaEntrega.toFixed(2)}</span>
+            </div>
+          </div>
+
           <div className={styles.totalFinal}>
             <span>Total a pagar:</span>
-            <strong>R$ {total.toFixed(2)}</strong>
+            <strong>R$ {totalGeral.toFixed(2)}</strong>
           </div>
+
           <button 
             className={styles.btnFinalizar} 
             onClick={finalizarTudo}
             disabled={salvando}
           >
-            {salvando ? "Processando..." : "Confirmar e Enviar Zap ✅"}
+            {salvando ? "Processando..." : "Confirmar e Enviar ✅"}
           </button>
         </div>
       </div>

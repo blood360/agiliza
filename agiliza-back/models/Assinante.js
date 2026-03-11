@@ -8,7 +8,15 @@ const AssinanteSchema = new mongoose.Schema({
     status: { type: String, enum: ['Ativo', 'Inadimplente', 'Bloqueado', 'Teste'], default: 'Ativo' },
     vencimento: { type: Date, required: true },
     whatsapp: { type: String, default: '' },
+    //ADICIONEI ESSES CAMPOS SE QUEBRAR VENHO AQUI
+    valorMinimo: {
+        type: Number,
+        default: 0
+    },
+    taxaEntrega: {
+        type: Number,
+        default: 0
+    },
 }, { timestamps: true });
 
-// Exporta o MODELO de verdade pro Router poder usar o .find() e o .save()
 module.exports = mongoose.models.Assinante || mongoose.model('Assinante', AssinanteSchema);

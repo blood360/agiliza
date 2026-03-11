@@ -19,18 +19,37 @@ router.get('/loja/:slug', async (req, res) => {
     }
 });
 
-// 📋 2. BUSCAR TODOS (Aqui é onde tá dando o 500!)
+// 📋 2. BUSCAR TODOS
 router.get('/', async (req, res) => {
     try {
         // O sort ajuda a ver os novos primeiro
         const assinantes = await Assinante.find().sort({ createdAt: -1 });
         
-        // Garante que se não tiver nada, mande uma lista vazia [] e não null
         res.json(assinantes || []); 
     } catch (err) {
-        // 🚨 ESSE LOG VAI APARECER NO PAINEL DO RENDER EM VERMELHO
+        
         console.error("❌ ERRO CRÍTICO NO GET ASSINANTES:", err);
         res.status(500).json({ erro: "Erro ao buscar no banco: " + err.message });
+    }
+});
+
+// 🔍 6. BUSCAR POR ID (Essencial para o Dashboard do Lojista)
+router.get('/loja-id/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Busca a loja pelo ID que vem na URL
+        const loja = await Assinante.findById(id);
+        
+        if (!loja) {
+            return res.status(404).json({ erro: "Vixe! Essa loja não foi encontrada no banco." });
+        }
+        
+        // Retorna os dados (incluindo taxaEntrega e valorMinimo que a gente adicionou)
+        res.json(loja);
+    } catch (err) {
+        console.error("❌ ERRO AO BUSCAR LOJA POR ID:", err);
+        res.status(500).json({ erro: "Erro interno: " + err.message });
     }
 });
 

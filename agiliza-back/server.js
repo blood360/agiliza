@@ -7,6 +7,7 @@ require('dotenv').config();
 const assinantesRoutes = require('./routes/assinantes');
 const pedidosRoutes = require('./routes/pedidos');
 const usuariosRoutes = require('./routes/usuarios');
+const produtosRoutes = require('./routes/produtos')
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use('/api/assinantes', assinantesRoutes);
 app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/produtos', produtosRoutes);
 
 // -- CONEXÃO COM O BANCO DE DADOS (MongoDB) --
 mongoose.connect(process.env.MONGODB_URI)
