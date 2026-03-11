@@ -2,8 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Assinante = require('../models/Assinante');
 
-// 🔍 1. BUSCAR POR SLUG (Essa tem que ser a PRIMEIRA!)
-// URL: http://localhost:5000/api/assinantes/loja/:slug
+// 🔍 1. BUSCAR POR SLUG (Mantida como primeira para não dar conflito)
 router.get('/loja/:slug', async (req, res) => {
     try {
         const { slug } = req.params;
@@ -22,24 +21,45 @@ router.get('/loja/:slug', async (req, res) => {
 // 📋 2. BUSCAR TODOS
 router.get('/', async (req, res) => {
     try {
-        const assinantes = await Assinante.find();
+        const assinantes = await Assinante.find().sort({ createdAt: -1 });
         res.json(assinantes);
     } catch (err) {
         res.status(500).json({ erro: err.message });
     }
 });
 
-// 🚀 3. CRIAR NOVO
+// 🚀 3. CRIAR NOVO (COM CÁLCULO AUTOMÁTICO DE VENCIMENTO)
 router.post('/', async (req, res) => {
     try {
-        const { loja, dono, plano, vencimento, whatsapp } = req.body;
-        const slug = loja.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
-        
-        const novo = new Assinante({ loja, slug, dono, plano, vencimento, whatsapp });
+        const { loja, dono, plano, whatsapp } = req.body;
+
+        // 🛡️ SEGURANÇA: Se não vier vencimento do Admin, a gente cria um de 30 dias
+        let dataVencimento = req.body.vencimento;
+        if (!dataVencimento) {
+            dataVencimento = new Date();
+            dataVencimento.setDate(dataVencimento.getDate() + 30);
+        }
+
+        // 🔗 GERADOR DE SLUG MELHORADO (Tira acentos e símbolos)
+        const slug = loja.toLowerCase().trim()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, "") // Tira acentos
+            .replace(/[^\w\s-]/g, '') // Tira símbolos
+            .replace(/[\s_-]+/g, '-') // Troca espaços por traço
+            .replace(/^-+|-+$/g, ''); // Limpa traços nas pontas
+
+        const novo = new Assinante({ 
+            loja, 
+            slug, 
+            dono, 
+            plano, 
+            vencimento: dataVencimento, 
+            whatsapp: whatsapp || '' 
+        });
+
         const salvo = await novo.save();
         res.status(201).json(salvo);
     } catch (err) {
-        res.status(400).json({ erro: err.message });
+        res.status(400).json({ erro: "Erro ao salvar assinante: " + err.message });
     }
 });
 

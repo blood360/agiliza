@@ -6,13 +6,13 @@ require('dotenv').config();
 // Importação das rotas
 const assinantesRoutes = require('./routes/assinantes');
 const pedidosRoutes = require('./routes/pedidos');
-const usuariosRoutes = require('./routes/usuarios'); // Nova rota de autenticação
+const usuariosRoutes = require('./routes/usuarios');
 
 const app = express();
 
 // Middlewares
 app.use(cors({
-    origin: '*',
+    origin: 'https://agiliza-front.vercel.app',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -21,7 +21,7 @@ app.use(express.json());
 // Definição das rotas da API
 app.use('/api/assinantes', assinantesRoutes);
 app.use('/api/pedidos', pedidosRoutes);
-app.use('/api/usuarios', usuariosRoutes); // Ativando o sistema de usuários
+app.use('/api/usuarios', usuariosRoutes);
 
 // -- CONEXÃO COM O BANCO DE DADOS (MongoDB) --
 mongoose.connect(process.env.MONGODB_URI)

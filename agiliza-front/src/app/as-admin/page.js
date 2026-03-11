@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import {useNotify} from '@/context/ToastContext'
 import styles from './master.module.css';
 import Image from 'next/image';
+import API_URL from '@/config/api';
 
 export default function MasterDashboard() {
   const [assinantes, setAssinantes] = useState([]);
@@ -15,7 +16,7 @@ export default function MasterDashboard() {
   useEffect(() => {
     const buscarAssinantes = async () => {
       try {
-        const resposta = await fetch('http://localhost:5000/api/assinantes');
+        const resposta = await fetch(`${API_URL}/api/assinantes`);
         const dados = await resposta.json();
         setAssinantes(dados);
       } catch (err) {
@@ -23,7 +24,7 @@ export default function MasterDashboard() {
       }
     };
     buscarAssinantes();
-  }, []);
+  }, [notify]);
 
   const custosAS = {
     salarioIgor: 3400.00,
@@ -34,11 +35,11 @@ export default function MasterDashboard() {
 
   // 🚀 Funções de Ação
   const alternarInadimplencia = async (id) => {
-    const assinante = assinantes.find(a => a._id === id); // Procura o cabra na lista
+    const assinante = assinantes.find(a => a._id === id);
     const novoStatus = assinante.status === 'Inadimplente' ? 'Ativo' : 'Inadimplente';
 
     try {
-      const resposta = await fetch(`http://localhost:5000/api/assinantes/${id}`, {
+      const resposta = await fetch(`${API_URL}/api/assinantes/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: novoStatus })
@@ -51,18 +52,19 @@ export default function MasterDashboard() {
         notify("Status de pagamento atualizado no banco!", "success");
       }
     } catch (err) {
-      notify("Macho, o banco não respondeu!", "error");
+      notify("Desculpe, banco não respondeu!", "error");
     }
   };
 
   const handleCriarAcesso = async (e) => {
     e.preventDefault();
     try {
-      const resposta = await fetch("http://localhost:5000/api/assinantes", {
+      const resposta = await fetch(`${API_URL}/api/assinantes`, {
         method: 'POST',
-        headers: {'Contet-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(novoAssinante)
       });
+
       if (resposta.ok) {
         const salvo = await resposta.json();
         setAssinantes([...assinantes, salvo]);
@@ -76,10 +78,10 @@ export default function MasterDashboard() {
 
   const alternarAcesso = async (id) => {
     const assinante = assinantes.find(a => a._id === id);
-    const novoStatus = assinante.status === 'Ativo' ? 'Bloqueado' : 'Ativo';
+    const novoStatus = (assinante.status === 'Ativo' || assinante.status === 'Inadimplente') ? 'Bloqueado' : 'Ativo';
 
     try {
-      const resposta = await fetch(`http://localhost:5000/api/assinantes/${id}`, {
+      const resposta = await fetch(`${API_URL}/api/assinantes/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: novoStatus })
@@ -103,7 +105,7 @@ export default function MasterDashboard() {
   if (!confirmou) return;
 
   try {
-    const resposta = await fetch(`http://localhost:5000/api/assinantes/${id}`, {
+    const resposta = await fetch(`${API_URL}/api/assinantes/${id}`, {
       method: 'DELETE',
     });
 
@@ -184,20 +186,20 @@ export default function MasterDashboard() {
               </thead>
               <tbody>
                 {assinantes.map(a => (
-                  <tr key={a.id}>
+                  <tr key={a._id}>
                     <td><strong>{a.loja}</strong></td>
                     <td>{a.dono}</td>
                     <td><span className={styles.tagPlano}>{a.plano}</span></td>
-                    <td>{new Date(a.vencimento).toLocaleDateString()}</td>
-                    <td><span className={`${styles.status} ${styles[a.status.toLowerCase()]}`}>{a.status}</span></td>
+                    <td>{a.vencimento ? new Date(a.vencimento).toLocaleDateString() : '---'}</td>
+                    <td><span className={`${styles.status} ${styles[a.status?.toLowerCase() || 'ativo']}`}>{a.status}</span></td>
                     <td>
                       <div className={styles.acoesBtn}>
-                        <button onClick={() => alternarAcesso(a.id)} className={styles.btnBloquear}>
+                        <button onClick={() => alternarAcesso(a._id)} className={styles.btnBloquear}>
                           {a.status === 'Bloqueado' ? '✅ Liberar' : '🚫 Bloquear'}
                         </button>
 
                         <button 
-                          onClick={() => alternarInadimplencia(a.id)} 
+                          onClick={() => alternarInadimplencia(a._id)} 
                           className={a.status === 'Inadimplente' ? styles.btnPago : styles.btnCobrar}
                         >
                           {a.status === 'Inadimplente' ? '💰 Marcar Pago' : '⚠️ Inadimplente'}
@@ -205,13 +207,7 @@ export default function MasterDashboard() {
 
                         <button className={styles.btnEditar}>📝</button>
 
-                        <button 
-                          onClick={() => handleExcluir(a._id, a.loja)} 
-                          className={styles.btnExcluir}
-                          title="Apagar Assinante"
-                        >
-                          🗑️
-                        </button>
+                        <button onClick={() => handleExcluir(a._id, a.loja)} className={styles.btnExcluir}>🗑️</button>
                       </div>
                     </td>
                   </tr>
