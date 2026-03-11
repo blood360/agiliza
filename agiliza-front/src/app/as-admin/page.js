@@ -14,27 +14,33 @@ export default function MasterDashboard() {
 
 
   useEffect(() => {
-  const buscarAssinantes = async () => {
-    try {
-      const resposta = await fetch(`${API_URL}/api/assinantes`);
-      const dados = await resposta.json();
+    const buscarAssinantes = async () => {
+      try {
+        const resposta = await fetch(`${API_URL}/api/assinantes`);
+        
+        // Se a resposta não for OK (tipo 500), a gente já avisa aqui
+        if (!resposta.ok) {
+            const erroTxt = await resposta.json();
+            console.error("Erro do Servidor:", erroTxt);
+            setAssinantes([]); // Mantém lista vazia pra não crashar
+            return;
+        }
 
-      // 🛡️ O PULO DO GATO: Só salva se for uma lista (Array)
-      if (Array.isArray(dados)) {
-        setAssinantes(dados);
-      } else {
-        // Se o servidor mandou um erro (objeto), a gente deixa a lista vazia
-        console.error("Vixe, o servidor não mandou uma lista:", dados);
-        setAssinantes([]); 
+        const dados = await resposta.json();
+
+        // 🛡️ SÓ SALVA SE FOR UMA LISTA (ARRAY)
+        if (Array.isArray(dados)) {
+          setAssinantes(dados);
+        } else {
+          setAssinantes([]); 
+        }
+      } catch (err) {
+        console.error("Erro de conexão:", err);
+        setAssinantes([]);
       }
-    } catch (err) {
-      console.error("Erro de conexão:", err);
-      notify("Macho, o banco de dados tá fora do ar!", 'error');
-      setAssinantes([]); // Garante que continua sendo uma lista vazia
-    }
-  };
-  buscarAssinantes();
-}, [notify]);
+    };
+    buscarAssinantes();
+}, []);
 
   const custosAS = {
     salarioIgor: 3400.00,

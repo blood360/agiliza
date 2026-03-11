@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Assinante = require('../models/Assinante');
 
-// 🔍 1. BUSCAR POR SLUG (Mantida como primeira para não dar conflito)
+// 🔍 1. BUSCAR POR SLUG
 router.get('/loja/:slug', async (req, res) => {
     try {
         const { slug } = req.params;
@@ -14,52 +14,65 @@ router.get('/loja/:slug', async (req, res) => {
         
         res.json(loja);
     } catch (err) {
+        console.error("❌ Erro no GET SLUG:", err);
         res.status(500).json({ erro: "Erro no servidor: " + err.message });
     }
 });
 
-// 📋 2. BUSCAR TODOS
+// 📋 2. BUSCAR TODOS (Aqui é onde tá dando o 500!)
 router.get('/', async (req, res) => {
     try {
+        // O sort ajuda a ver os novos primeiro
         const assinantes = await Assinante.find().sort({ createdAt: -1 });
-        res.json(assinantes);
+        
+        // Garante que se não tiver nada, mande uma lista vazia [] e não null
+        res.json(assinantes || []); 
     } catch (err) {
-        res.status(500).json({ erro: err.message });
+        // 🚨 ESSE LOG VAI APARECER NO PAINEL DO RENDER EM VERMELHO
+        console.error("❌ ERRO CRÍTICO NO GET ASSINANTES:", err);
+        res.status(500).json({ erro: "Erro ao buscar no banco: " + err.message });
     }
 });
 
-// 🚀 3. CRIAR NOVO (COM CÁLCULO AUTOMÁTICO DE VENCIMENTO)
+// 🚀 3. CRIAR NOVO
 router.post('/', async (req, res) => {
     try {
-        const { loja, dono, plano, whatsapp } = req.body;
+        const { loja, dono, plano, whatsapp, vencimento } = req.body;
 
-        // 🛡️ SEGURANÇA: Se não vier vencimento do Admin, a gente cria um de 30 dias
-        let dataVencimento = req.body.vencimento;
-        if (!dataVencimento) {
-            dataVencimento = new Date();
-            dataVencimento.setDate(dataVencimento.getDate() + 30);
+        if (!loja || !dono) {
+            return res.status(400).json({ erro: "Macho, faltou nome da loja ou do dono!" });
         }
 
-        // 🔗 GERADOR DE SLUG MELHORADO (Tira acentos e símbolos)
+        // 📅 Lógica de Vencimento corrigida para evitar "Invalid Date"
+        let dataFinal;
+        if (!vencimento || vencimento === "") {
+            dataFinal = new Date();
+            dataFinal.setDate(dataFinal.getDate() + 30);
+        } else {
+            dataFinal = new Date(vencimento);
+        }
+
+        // 🔗 Gerador de Slug blindado
         const slug = loja.toLowerCase().trim()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, "") // Tira acentos
-            .replace(/[^\w\s-]/g, '') // Tira símbolos
-            .replace(/[\s_-]+/g, '-') // Troca espaços por traço
-            .replace(/^-+|-+$/g, ''); // Limpa traços nas pontas
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, "") 
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[\s_-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
 
         const novo = new Assinante({ 
             loja, 
             slug, 
             dono, 
-            plano, 
-            vencimento: dataVencimento, 
+            plano: plano || 'Iniciante', 
+            vencimento: dataFinal, 
             whatsapp: whatsapp || '' 
         });
 
         const salvo = await novo.save();
         res.status(201).json(salvo);
     } catch (err) {
-        res.status(400).json({ erro: "Erro ao salvar assinante: " + err.message });
+        console.error("❌ ERRO AO SALVAR ASSINANTE:", err);
+        res.status(400).json({ erro: "Vixe! Erro ao salvar: " + err.message });
     }
 });
 
@@ -69,6 +82,7 @@ router.put('/:id', async (req, res) => {
         const atualizado = await Assinante.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.json(atualizado);
     } catch (err) {
+        console.error("❌ ERRO NO PUT ASSINANTE:", err);
         res.status(400).json({ erro: err.message });
     }
 });
@@ -79,6 +93,7 @@ router.delete('/:id', async (req, res) => {
         await Assinante.findByIdAndDelete(req.params.id);
         res.json({ mensagem: "Apagado com sucesso!" });
     } catch (err) {
+        console.error("❌ ERRO NO DELETE ASSINANTE:", err);
         res.status(500).json({ erro: err.message });
     }
 });
