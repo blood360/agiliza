@@ -34,13 +34,12 @@ export function AgilizaProvider({ children }) {
             const dados = await res.json();
             setUsuarioLogado(dados);
 
-            // 🔥 O PULO DO GATO ESTÁ AQUI: 
-            // Se o Adriano tá logado, o perfil do comprador já recebe os dados dele!
+            // 🔥 AQUI ESTÁ O REMENDO: Copia os dados do logado para o perfil de compra
             setPerfilCliente(prev => ({
               ...prev,
               nome: dados.nome || prev.nome,
               telefone: dados.telefone || prev.telefone,
-              endereco: dados.endereco || prev.endereco,
+              endereco: dados.endereco || prev.endereco, // 👈 Agora o endereço "pula" pra cá
               referencia: dados.referencia || prev.referencia
             }));
           }

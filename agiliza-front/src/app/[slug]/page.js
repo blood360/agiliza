@@ -82,13 +82,12 @@ export default function HomeLoja() {
   const totalPedido = carrinho.reduce((acc, item) => acc + item.preco, 0);
 
   const abrirCheckout = () => {
-    if (!lojaEstaAberta) return notify("Vixe, macho! A loja está fechada agora. 🚫", "warning");
+    if (!lojaEstaAberta) return notify("A loja está fechada agora. 🚫", "warning");
     if (carrinho.length === 0) return notify("Adicione um produto antes de finalizar! 🛒", "warning");
     
-    // 🛡️ Verifica se o cliente tem endereço antes de abrir
+    // 🛡️ Agora ele para aqui se não tiver endereço!
     if (!perfilCliente.endereco) {
-      notify("Macho, cadê teu endereço? Atualiza lá no Perfil! 📍", "warning");
-      // Opcional: router.push('/perfil');
+      return notify("Adicione seu endereço no Perfil! 📍", "warning");
     }
     
     setIsModalOpen(true);
