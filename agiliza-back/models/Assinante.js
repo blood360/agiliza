@@ -1,48 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const Assinante = require('../models/Assinante');
+const mongoose = require('mongoose');
 
-// --- ROTA PARA CADASTRAR (O que o seu as-admin chama) ---
-router.post('/', async (req, res) => {
-    try {
-        const { loja, dono, plano, whatsapp } = req.body;
+const AssinanteSchema = new mongoose.Schema({
+    loja: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
+    dono: { type: String, required: true },
+    plano: { type: String, enum: ['Iniciante', 'Pro'], default: 'Iniciante' },
+    status: { type: String, enum: ['Ativo', 'Inadimplente', 'Bloqueado', 'Teste'], default: 'Ativo' },
+    vencimento: { type: Date, required: true },
+    whatsapp: { type: String, default: '' },
+}, { timestamps: true });
 
-        // 1. Gera o SLUG automático 
-        const slug = loja.toLowerCase().trim()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^\w\s-]/g, '')
-            .replace(/[\s_-]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-
-        // 2. Calcula o VENCIMENTO (hoje + 30 dias) já que é obrigatório no Model
-        const dataVencimento = new Date();
-        dataVencimento.setDate(dataVencimento.getDate() + 30);
-
-        const novoAssinante = new Assinante({
-            loja,
-            dono,
-            slug,
-            plano,
-            whatsapp: whatsapp || '',
-            vencimento: dataVencimento,
-            status: 'Ativo'
-        });
-
-        await novoAssinante.save();
-        res.status(201).json(novoAssinante);
-    } catch (err) {
-        res.status(400).json({ erro: "Vixe, erro ao salvar: " + err.message });
-    }
-});
-
-// --- ROTA PARA LISTAR TUDO (Pra sua tabela) ---
-router.get('/', async (req, res) => {
-    try {
-        const lojas = await Assinante.find().sort({ createdAt: -1 });
-        res.json(lojas);
-    } catch (err) {
-        res.status(500).json({ erro: "Erro ao buscar lojas." });
-    }
-});
-
-module.exports = router;
+// Exporta o MODELO de verdade pro Router poder usar o .find() e o .save()
+module.exports = mongoose.models.Assinante || mongoose.model('Assinante', AssinanteSchema);
