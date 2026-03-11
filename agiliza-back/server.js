@@ -11,8 +11,20 @@ const usuariosRoutes = require('./routes/usuarios');
 const app = express();
 
 // Middlewares
+const origensPermitidas = [
+    'https://agiliza-front.vercel.app', 
+    'https://agiliza-swart.vercel.app'
+];
+
 app.use(cors({
-    origin: 'https://agiliza-front.vercel.app',
+    origin: function (origin, callback) {
+        // Se a origem for um dos nossos sites ou se for um teste local (sem origin)
+        if (!origin || origensPermitidas.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS não permitido para esta origem, macho!'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
