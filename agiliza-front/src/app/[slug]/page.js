@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'; // 👈 Adicionado useCallback
+import { useState, useEffect, useCallback } from 'react'; 
 import { useParams, useRouter } from 'next/navigation';
 import styles from '@/app/page.module.css';
 import ListaProdutosGrid from '@/components/ListaProdutosGrid';
@@ -23,7 +23,7 @@ export default function HomeLoja() {
   const [lojaEstaAberta, setLojaEstaAberta] = useState(true);
   const [carregando, setCarregando] = useState(true);
 
-  // 🛡️ 1. FUNÇÃO MESTRA (Agora com nome único e useCallback)
+  // 🛡️ 1. FUNÇÃO MESTRA: Busca dados da Loja e Produtos
   const carregarDadosDaLoja = useCallback(async () => {
     if (!slug) return;
 
@@ -52,6 +52,8 @@ export default function HomeLoja() {
       const listaProdutos = await resProdutos.json();
       
       if (Array.isArray(listaProdutos)) {
+        // 🔍 DEDO-DURO: Log para ver se a imagem está vindo no console
+        console.log("Produtos carregados:", listaProdutos);
         setProdutosReais(listaProdutos);
       }
 
@@ -63,7 +65,7 @@ export default function HomeLoja() {
     }
   }, [slug, router, notify]);
 
-  // 🔄 2. CHAMA A FUNÇÃO QUANDO ENTRA NA PÁGINA
+  // 🔄 2. EFEITO DE ENTRADA
   useEffect(() => {
     carregarDadosDaLoja();
   }, [carregarDadosDaLoja]);
@@ -92,6 +94,7 @@ export default function HomeLoja() {
 
   return (
     <main className={styles.containerLoja}>
+      {/* Banner de Status */}
       <div className={lojaEstaAberta ? styles.bannerAviso : styles.bannerFechado}>
         <span>{lojaEstaAberta ? `✅ Aberto agora: ${nomeExibicao}` : "🚫 ESTAMOS FECHADOS NO MOMENTO"}</span>
       </div>
@@ -104,20 +107,30 @@ export default function HomeLoja() {
         <BotaoCompartilhar />
       </header>
 
+      {/* 🚀 LISTAGEM DE PRODUTOS COM TRATAMENTO DE IMAGEM */}
       {produtosReais.length > 0 ? (
-        <ListaProdutosGrid produtos={produtosReais} onAdd={adicionarAoCarrinho} />
+        <ListaProdutosGrid 
+          produtos={produtosReais.map(p => ({
+            ...p,
+            // Garante que a imagem é tratada corretamente, seja URL ou Base64
+            imagem: p.imagem || '/placeholder.png' 
+          }))} 
+          onAdd={adicionarAoCarrinho} 
+        />
       ) : (
         <div className={styles.semProdutos}>
           <p>Essa loja ainda não cadastrou produtos. 📦</p>
         </div>
       )}
 
+      {/* Botão Flutuante do Carrinho */}
       {carrinho.length > 0 && !isModalOpen && (
         <button onClick={abrirCheckout} className={styles.btnFlutuanteCarrinho}>
           🛒 Ver Carrinho (R$ {totalPedido.toFixed(2)})
         </button>
       )}
 
+      {/* Modal de Finalização */}
       {isModalOpen && (
         <Checkout 
           aoFechar={() => setIsModalOpen(false)} 
