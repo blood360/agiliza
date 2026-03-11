@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs'); // Mantendo apenas UM aqui no topo
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
+const Assinante = require('../models/Assinante'); // 👈 Tu esqueceu de importar esse modelo!
 
-// --- MIDDLEWARE DE AUTENTICAÇÃO (O GUARDA DA AS AUTOMAÇÕES) ---
-// Ele verifica se o token é válido antes de deixar passar para o perfil
+// --- MIDDLEWARE DE AUTENTICAÇÃO ---
 const auth = async (req, res, next) => {
     try {
         const authHeader = req.header('Authorization');
@@ -14,62 +14,57 @@ const auth = async (req, res, next) => {
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_as_automacoes');
         
-        req.usuario = decoded; // Salva os dados do usuário (id e tipo) na requisição
+        req.usuario = decoded; 
         next();
     } catch (err) {
         res.status(401).json({ erro: "Token inválido ou expirado." });
     }
 };
 
-// --- ROTA DE PERFIL (A QUE ESTAVA FALTANDO!) ---
+// --- ROTA DE PERFIL ---
 router.get('/perfil', auth, async (req, res) => {
     try {
-        // Busca o usuário pelo ID que veio no Token, removendo a senha por segurança
         const usuario = await Usuario.findById(req.usuario.id).select('-senha');
-        
         if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
-
-        // Retorna o objeto completo (nome, email, telefone, endereco, referencia...)
         res.json(usuario);
     } catch (err) {
         res.status(500).json({ erro: "Erro ao buscar perfil: " + err.message });
     }
 });
 
-const bcrypt = require('bcrypt'); // Garante que a senha seja criptografada
-
-// 🔑 ROTA PARA O MASTER ADMIN GERAR ACESSO AO LOJISTA
+// 🔑 ROTA PARA O AUTO-REGISTRO DO LOJISTA
 router.post('/registrar-lojista-self', async (req, res) => {
     try {
         const { nome, email, senha, telefone, lojaId } = req.body;
 
-        // 1. Verifica se o e-mail já existe
+        // 1. Verifica se a loja existe
         const lojaExiste = await Assinante.findById(lojaId);
         if (!lojaExiste) {
-            return res.status(400).json({ erro: "Dessculpe esse código de loja não está autorizado." });
+            return res.status(400).json({ erro: "Desculpe, esse código de loja não está autorizado." });
         }
 
+        // 2. Verifica se a loja já tem dono
         const donoExistente = await Usuario.findOne({ lojaId });
         if(donoExistente) {
             return res.status(400).json({erro: "Essa loja já está cadastrada."});
         }
 
-        /// -- verifica se o email está em uso --
-        const emailUsado = await Usuario.findeOne({ email });
+        // 3. Verifica se o email está em uso (CORRIGIDO: findeOne -> findOne)
+        const emailUsado = await Usuario.findOne({ email });
         if(emailUsado) return res.status(400).json({erro: "Este email já está sendo usado!"});
 
-        // 2. Criptografa a senha (Segurança em primeiro lugar!)
+        // 4. Criptografa a senha
         const salt = await bcrypt.genSalt(10);
         const senhaHash = await bcrypt.hash(senha, salt);
 
-        // 3. Cria o novo usuário com o "DNA" da loja
+        // 5. Cria o novo lojista
         const novoLojista = new Usuario({
             nome,
             email,
             senha: senhaHash,
             telefone,
             tipo: 'lojista',
-            lojaId           // Aqui é o vínculo com a loja que criei
+            lojaId 
         });
 
         await novoLojista.save();
@@ -81,11 +76,10 @@ router.post('/registrar-lojista-self', async (req, res) => {
     }
 });
 
-// --- ROTA PARA REGISTRAR (MANTIDA ORIGINAL) ---
+// --- ROTA PARA REGISTRAR CLIENTE ---
 router.post('/registrar', async (req, res) => {
     try {
         const { nome, email, senha, telefone } = req.body;
-
         const usuarioExistente = await Usuario.findOne({ email });
         if (usuarioExistente) return res.status(400).json({ erro: "Este e-mail já está cadastrado." });
 
@@ -107,19 +101,16 @@ router.post('/registrar', async (req, res) => {
     }
 });
 
-// --- ROTA PARA ATUALIZAR DADOS DO PERFIL (NOME, TEL, ENDEREÇO, REF) ---
+// --- ROTA PARA ATUALIZAR PERFIL ---
 router.put('/perfil', auth, async (req, res) => {
     try {
         const updates = Object.keys(req.body);
         const camposPermitidos = ['nome', 'telefone', 'endereco', 'referencia'];
         const operacaoValida = updates.every(update => camposPermitidos.includes(update));
 
-        if (!operacaoValida) {
-            return res.status(400).send({ erro: 'Atualização inválida!' });
-        }
+        if (!operacaoValida) return res.status(400).send({ erro: 'Atualização inválida!' });
 
         const usuario = await Usuario.findById(req.usuario.id);
-        
         updates.forEach(update => usuario[update] = req.body[update]);
         await usuario.save();
 
@@ -129,11 +120,10 @@ router.put('/perfil', auth, async (req, res) => {
     }
 });
 
-// --- ROTA PARA LOGIN (MANTIDA ORIGINAL) ---
+// --- ROTA PARA LOGIN ---
 router.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
-
         const usuario = await Usuario.findOne({ email });
         if (!usuario) return res.status(400).json({ erro: "E-mail ou senha incorretos." });
 

@@ -10,7 +10,7 @@ export default function MasterDashboard() {
   const notify = useNotify();
   const [abaAtiva, setAbaAtiva] = useState('assinantes');
   const [isModalNovo, setIsModalNovo] = useState(false);
-  const [novoAssinante, setNovoAssinante] = useState({ loja: '', dono: '', plano: 'Iniciante', cencimento: '' });
+  const [novoAssinante, setNovoAssinante] = useState({ loja: '', dono: '', plano: 'Iniciante', vencimento: '' });
 
 
   useEffect(() => {
@@ -18,17 +18,15 @@ export default function MasterDashboard() {
       try {
         const resposta = await fetch(`${API_URL}/api/assinantes`);
         
-        // Se a resposta não for OK (tipo 500), a gente já avisa aqui
         if (!resposta.ok) {
             const erroTxt = await resposta.json();
             console.error("Erro do Servidor:", erroTxt);
-            setAssinantes([]); // Mantém lista vazia pra não crashar
+            setAssinantes([]); 
             return;
         }
 
         const dados = await resposta.json();
 
-        // 🛡️ SÓ SALVA SE FOR UMA LISTA (ARRAY)
         if (Array.isArray(dados)) {
           setAssinantes(dados);
         } else {
@@ -49,7 +47,6 @@ export default function MasterDashboard() {
     dominio: 3.33
   };
 
-  // 🚀 Funções de Ação
   const alternarInadimplencia = async (id) => {
     const assinante = assinantes.find(a => a._id === id);
     const novoStatus = assinante.status === 'Inadimplente' ? 'Ativo' : 'Inadimplente';
@@ -63,7 +60,6 @@ export default function MasterDashboard() {
 
       if (resposta.ok) {
         const atualizado = await resposta.json();
-        // Atualiza a tela sem recarregar
         setAssinantes(assinantes.map(a => a._id === id ? atualizado : a));
         notify("Status de pagamento atualizado no banco!", "success");
       }
@@ -81,23 +77,14 @@ export default function MasterDashboard() {
         body: JSON.stringify(novoAssinante)
       });
 
-      // 1. Pega a resposta do servidor (seja sucesso ou erro)
       const dados = await resposta.json();
 
       if (resposta.ok) {
-        // 2. Atualiza a lista na tela com o que voltou do banco
         setAssinantes([...assinantes, dados]);
-        
-        // 3. Fecha o modal
         setIsModalNovo(false);
-        
-        // 4. LIMPA O FORMULÁRIO (Essencial pra não bugar o próximo cadastro)
         setNovoAssinante({ loja: '', dono: '', plano: 'Iniciante', vencimento: '' });
-        
-        // 5. USA O NOTIFY PRA MENSAGEM (E não o setNovoAssinante!)
         notify("Assinante cadastrado com sucesso! 🚀", 'success');
       } else {
-        // Se o servidor deu erro (tipo o 400), ele avisa o motivo real
         notify(dados.erro || "Vixe! O servidor barrou o cadastro.", "error");
       }
     } catch (err) {
@@ -120,7 +107,6 @@ export default function MasterDashboard() {
       if (resposta.ok) {
         const atualizado = await resposta.json();
         setAssinantes(assinantes.map(a => a._id === id ? atualizado : a));
-        
         const msg = novoStatus === 'Bloqueado' ? "🚫 Loja suspensa!" : "✅ Loja liberada!";
         notify(msg, novoStatus === 'Bloqueado' ? "warning" : "success");
       }
@@ -131,7 +117,6 @@ export default function MasterDashboard() {
 
   const handleExcluir = async (id, nomeLoja) => {
   const confirmou = window.confirm(`Patrão tem certeza que quer apagar a loja "${nomeLoja}"?`);
-  
   if (!confirmou) return;
 
   try {
@@ -153,7 +138,6 @@ export default function MasterDashboard() {
     const inadimplentes = assinantes.filter(a => a.status === 'Inadimplente').length;
     const iniciantes = assinantes.filter(a => a.plano === 'Iniciante');
     const pros = assinantes.filter(a => a.plano === 'Pro');
-    
     const faturamentoBruto = (iniciantes.length * 49.90) + (pros.length * 89.90);
     const totalDespesas = Object.values(custosAS).reduce((a, b) => a + b, 0);
 
@@ -256,20 +240,22 @@ Boas vendas! Atenciosamente, *AS Automações*.`;
 
                         <button className={styles.btnEditar}>📝</button>
 
+                        {/* CORREÇÃO AQUI: Trocado 'item' por 'a' */}
                         <button 
                           title='Copiar ID'
                           className={styles.btnAcaoSimples}
-                          onClick={() => copiarID(item._id)}
+                          onClick={() => copiarID(a._id)}
                         >
-                          Copiar ID
+                          🆔 ID
                         </button>
 
+                        {/* CORREÇÃO AQUI: Trocado 'item' por 'a' */}
                         <button
                           title="Copiar Convite para o WhatsApp"
                           className={styles.btnConvite} 
-                          onClick={() => copiarConvite(item._id, item.loja)}
+                          onClick={() => copiarConvite(a._id, a.loja)}
                         >
-                          💬 Enviar Convite
+                          💬 Convite
                         </button>
 
                         <button onClick={() => handleExcluir(a._id, a.loja)} className={styles.btnExcluir}>🗑️</button>
