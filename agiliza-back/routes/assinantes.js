@@ -34,22 +34,18 @@ router.get('/', async (req, res) => {
 });
 
 // 🔍 6. BUSCAR POR ID (Essencial para o Dashboard do Lojista)
-router.get('/loja-id/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        
-        // Busca a loja pelo ID que vem na URL
         const loja = await Assinante.findById(id);
         
         if (!loja) {
-            return res.status(404).json({ erro: "Vixe! Essa loja não foi encontrada no banco." });
+            return res.status(404).json({ erro: "Macho, essa loja não existe no banco!" });
         }
-        
-        // Retorna os dados (incluindo taxaEntrega e valorMinimo que a gente adicionou)
         res.json(loja);
     } catch (err) {
-        console.error("❌ ERRO AO BUSCAR LOJA POR ID:", err);
-        res.status(500).json({ erro: "Erro interno: " + err.message });
+        console.error("❌ Erro no GET por ID:", err);
+        res.status(500).json({ erro: "Erro interno no servidor." });
     }
 });
 
@@ -98,11 +94,19 @@ router.post('/', async (req, res) => {
 // 📝 4. ATUALIZAR (PUT)
 router.put('/:id', async (req, res) => {
     try {
-        const atualizado = await Assinante.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.json(atualizado);
+        const { id } = req.params;
+        const dadosAtualizados = req.body;
+
+        const loja = await Assinante.findByIdAndUpdate(id, dadosAtualizados, { new: true });
+
+        if (!loja) {
+            return res.status(404).json({ erro: "Não consegui achar essa loja pra atualizar." });
+        }
+
+        res.json({ mensagem: "Loja atualizada com sucesso! 🚀", loja });
     } catch (err) {
-        console.error("❌ ERRO NO PUT ASSINANTE:", err);
-        res.status(400).json({ erro: err.message });
+        console.error("❌ Erro no PUT por ID:", err);
+        res.status(500).json({ erro: "Erro ao atualizar dados." });
     }
 });
 
