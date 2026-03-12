@@ -64,7 +64,20 @@ export default function NovoProduto() {
   // 3. Enviar para o Banco de Dados
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!lojaId) return notify("Vixe, erro de identificação da loja!", "error");
+    
+    // 3 BUSCA DE EMERGÊNCIA: Se o estado estiver vazio, lê direto do storage na hora do clique
+    let idParaSalvar = lojaId;
+    if (!idParaSalvar) {
+      const userJson = localStorage.getItem('@Agiliza:Usuario');
+      if (userJson) {
+        const usuario = JSON.parse(userJson);
+        idParaSalvar = usuario.lojaId;
+      }
+    }
+
+    if (!idParaSalvar || idParaSalvar === "null") {
+      return notify("Macho, não achei o ID da sua loja. Tente sair e entrar de novo!", "error");
+    }
 
     setCarregando(true);
 
@@ -75,15 +88,15 @@ export default function NovoProduto() {
         body: JSON.stringify({
           ...form,
           preco: parseFloat(form.preco),
-          lojaId: lojaId // 👈 VINCULA O PRODUTO À LOJA REAL
+          lojaId: idParaSalvar // 👈 Agora o ID vai garantido!
         })
       });
 
       if (res.ok) {
-        notify("Produto cadastrado com sucesso! 🍔🔥", "success");
-        router.push('/admin/produtos'); // Volta para a listagem
+        notify("Hambúrguer cadastrado com sucesso! 🍔🔥", "success");
+        router.push('/admin/produtos');
       } else {
-        notify("Erro ao salvar produto no banco.", "error");
+        notify("Vixe, erro ao salvar. Verifique os dados!", "error");
       }
     } catch (err) {
       notify("Erro de conexão com o servidor!", "error");

@@ -8,8 +8,8 @@ router.get('/', async (req, res) => {
     try {
         const { lojaId } = req.query; // 👈 Pega o que vem depois do '?'
 
-        if (!lojaId) {
-            return res.status(400).json({ erro: "Macho, tu esqueceu de mandar o ID da loja no link!" });
+        if (!lojaId || lojaId === 'null') {
+            return res.json([]);
         }
 
         // Busca só os produtos daquela loja e organiza por categoria
