@@ -33,7 +33,7 @@ export default function Checkout({ aoFechar }) {
 
     try { //mensagem para identificar o id da loja que recebe o pedido
       console.log("Enviando pedido para a loja ID:", loja?._id);
-      console.log("Dados do pedido:", {total: totalGeral, itens: corrinho.length});
+      console.log("Dados do pedido:", {total: totalGeral, itens: carrinho.length});
       const res = await fetch(`${API_URL}/api/pedidos/novo`, { 
         method: 'POST',
         headers: {
