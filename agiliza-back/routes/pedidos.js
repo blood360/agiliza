@@ -8,6 +8,8 @@ const auth = async (req, res, next) => {
     try {
         const token = req.header('Authorization').replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_as_automacoes');
+        
+        // Salvando o ID no request para as rotas usarem
         req.usuarioId = decoded.id; 
         next();
     } catch (e) {
@@ -15,56 +17,57 @@ const auth = async (req, res, next) => {
     }
 };
 
-// 🎯 NOVA ROTA: BUSCAR PEDIDOS DA LOJA (O que estava faltando!)
-// Essa rota responde a: GET /api/pedidos?lojaId=...
-router.get('/', async (req, res) => {
-    try {
-        const { lojaId } = req.query;
-
-        if (!lojaId || lojaId === "null") {
-            return res.json([]); // Retorna vazio se não tiver ID
-        }
-
-        // Busca pedidos daquela loja específica e ordena pelos mais novos
-        const pedidos = await Pedido.find({ lojaId }).sort({ createdAt: -1 });
-        res.json(pedidos);
-    } catch (err) {
-        console.error("Erro ao buscar pedidos da loja:", err);
-        res.status(500).json({ erro: "Vixe! Erro ao carregar pedidos." });
-    }
-});
-
-// --- ROTA 1: BUSCAR HISTÓRICO DO CLIENTE ---
+// --- ROTA 1: BUSCAR HISTÓRICO (CORRIGIDA) ---
 router.get('/meus-pedidos', auth, async (req, res) => {
     try {
         const pedidos = await Pedido.find({ usuarioId: req.usuarioId }).sort({ createdAt: -1 });
         res.json(pedidos);
     } catch (err) {
-        res.status(500).json({ erro: "Erro ao buscar seus pedidos." });
+        res.status(500).json({ erro: "Erro ao buscar pedidos." });
     }
 });
 
-// --- ROTA 2: SALVAR NOVO PEDIDO NO BANCO ---
+// --- ROTA 2: SALVAR NOVO PEDIDO NO BANCO (NOVA!) ---
 router.post('/novo', auth, async (req, res) => {
     try {
-        const { lojaId, itens, subtotal, taxaEntrega, total, cliente, pagamento } = req.body;
+        const { lojaId, itens, subtotal, total, cliente } = req.body;
 
         const novoPedido = new Pedido({
             lojaId,
             usuarioId: req.usuarioId,
             itens,
-            subtotal,
-            taxaEntrega,
             total,
             cliente,
-            pagamento,
             status: 'Pendente'
         });
 
         await novoPedido.save();
-        res.status(201).json({ mensagem: "Pedido registrado!", pedido: novoPedido });
+        res.status(201).json({ mensagem: "Pedido registrado na AS Automações!", pedido: novoPedido });
     } catch (err) {
-        res.status(400).json({ erro: "Erro ao salvar pedido: " + err.message });
+        res.status(400).json({ erro: "Vixe! Erro ao salvar pedido: " + err.message });
+    }
+});
+
+// 🛠️ ROTA QUE FALTAVA: ATUALIZAR STATUS (Aceitar / Concluir)
+router.put('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body; // Recebe 'Preparando' ou 'Entregue'
+
+        const pedidoAtualizado = await Pedido.findByIdAndUpdate(
+            id, 
+            { $set: { status } }, 
+            { new: true }
+        );
+
+        if (!pedidoAtualizado) {
+            return res.status(404).json({ erro: "Pedido não encontrado no banco." });
+        }
+
+        res.json(pedidoAtualizado);
+    } catch (err) {
+        console.error("Erro ao atualizar status:", err);
+        res.status(500).json({ erro: "Erro ao atualizar pedido." });
     }
 });
 
