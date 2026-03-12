@@ -8,8 +8,6 @@ const auth = async (req, res, next) => {
     try {
         const token = req.header('Authorization').replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_as_automacoes');
-        
-        // Salvando o ID no request para as rotas usarem
         req.usuarioId = decoded.id; 
         next();
     } catch (e) {
@@ -17,34 +15,47 @@ const auth = async (req, res, next) => {
     }
 };
 
-// --- ROTA 1: BUSCAR HISTÓRICO (CORRIGIDA) ---
+// 🎯 BUSCAR PEDIDOS DA LOJA
+router.get('/', async (req, res) => {
+    try {
+        const { lojaId } = req.query;
+        if (!lojaId || lojaId === "null") return res.json([]);
+        const pedidos = await Pedido.find({ lojaId }).sort({ createdAt: -1 });
+        res.json(pedidos);
+    } catch (err) {
+        res.status(500).json({ erro: "Erro ao carregar pedidos." });
+    }
+});
+
+// --- BUSCAR HISTÓRICO DO CLIENTE ---
 router.get('/meus-pedidos', auth, async (req, res) => {
     try {
         const pedidos = await Pedido.find({ usuarioId: req.usuarioId }).sort({ createdAt: -1 });
         res.json(pedidos);
     } catch (err) {
-        res.status(500).json({ erro: "Erro ao buscar pedidos." });
+        res.status(500).json({ erro: "Erro ao buscar seus pedidos." });
     }
 });
 
-// --- ROTA 2: SALVAR NOVO PEDIDO NO BANCO (NOVA!) ---
+// --- SALVAR NOVO PEDIDO NO BANCO ---
 router.post('/novo', auth, async (req, res) => {
     try {
-        const { lojaId, itens, subtotal, total, cliente } = req.body;
-
+        const { lojaId, itens, subtotal, taxaEntrega, total, cliente, pagamento } = req.body;
         const novoPedido = new Pedido({
             lojaId,
             usuarioId: req.usuarioId,
             itens,
+            subtotal,
+            taxaEntrega,
             total,
             cliente,
+            pagamento,
             status: 'Pendente'
         });
-
         await novoPedido.save();
-        res.status(201).json({ mensagem: "Pedido registrado na AS Automações!", pedido: novoPedido });
+        res.status(201).json({ mensagem: "Pedido registrado!", pedido: novoPedido });
     } catch (err) {
-        res.status(400).json({ erro: "Vixe! Erro ao salvar pedido: " + err.message });
+        res.status(400).json({ erro: "Erro ao salvar pedido: " + err.message });
     }
 });
 
