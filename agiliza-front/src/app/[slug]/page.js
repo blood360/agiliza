@@ -123,10 +123,22 @@ export default function HomeLoja() {
 
       {produtosReais.length > 0 ? (
         <ListaProdutosGrid 
-          produtos={produtosReais.map(p => ({
-            ...p,
-            imagem: p.imagem || '/placeholder.png' 
-          }))} 
+          produtos={produtosReais.map(p => {
+            let imagemTratada = '/placeholder.png';
+
+            if (p.imagem) {
+              if (p.imagem.startsWith('data:') || p.imagem.startsWith('http')) {
+                imagemTratada = p.imagem;
+              } else {
+                imagemTratada = `data:image/jpeg;base64,${p.imagem}`;
+              }
+            }
+
+            return {
+              ...p,
+              imagem: imagemTratada
+            };
+          })} 
           onAdd={adicionarAoCarrinho} 
         />
       ) : (

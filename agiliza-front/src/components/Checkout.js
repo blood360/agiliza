@@ -34,7 +34,7 @@ export default function Checkout({ aoFechar }) {
     try {
       // 🛡️ 4. ENVIO PARA O BACKEND (Rota padrão)
       // DICA: Verifique se sua rota no backend é /api/pedidos ou /api/pedidos/novo
-      const res = await fetch(`${API_URL}/api/pedidos`, { 
+      const res = await fetch(`${API_URL}/api/pedidos/novo`, { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

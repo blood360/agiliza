@@ -20,7 +20,6 @@ const auth = async (req, res, next) => {
 // --- ROTA 1: BUSCAR HISTÓRICO (CORRIGIDA) ---
 router.get('/meus-pedidos', auth, async (req, res) => {
     try {
-        // Corrigido: usando req.usuarioId que vem do middleware acima
         const pedidos = await Pedido.find({ usuarioId: req.usuarioId }).sort({ createdAt: -1 });
         res.json(pedidos);
     } catch (err) {
@@ -31,21 +30,22 @@ router.get('/meus-pedidos', auth, async (req, res) => {
 // --- ROTA 2: SALVAR NOVO PEDIDO NO BANCO (NOVA!) ---
 router.post('/novo', auth, async (req, res) => {
     try {
-        const { lojaId, itens, total, cliente } = req.body;
+        const { lojaId, itens, subtotal, taxaEntrega, total, cliente, pagamento } = req.body;
 
         const novoPedido = new Pedido({
             lojaId,
-            usuarioId: req.usuarioId, // Vincula o pedido ao ID do cabra logado
+            usuarioId: req.usuarioId,
             itens,
             total,
-            cliente, // Nome, WhatsApp e Endereço que vieram do Checkout
+            cliente,
+            pagamento,
             status: 'Pendente'
         });
 
         await novoPedido.save();
-        res.status(201).json({ mensagem: "Pedido registrado na AS Automações!", pedido: novoPedido });
+        res.status(201).json({ mensagem: "Pedido registrado!", pedido: novoPedido });
     } catch (err) {
-        res.status(400).json({ erro: "Vixe! Erro ao salvar pedido: " + err.message });
+        res.status(400).json({ erro: "Erro ao salvar pedido: " + err.message });
     }
 });
 
