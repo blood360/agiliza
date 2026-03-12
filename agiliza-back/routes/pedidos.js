@@ -8,8 +8,6 @@ const auth = async (req, res, next) => {
     try {
         const token = req.header('Authorization').replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_as_automacoes');
-        
-        // Salvando o ID no request para as rotas usarem
         req.usuarioId = decoded.id; 
         next();
     } catch (e) {
@@ -17,17 +15,36 @@ const auth = async (req, res, next) => {
     }
 };
 
-// --- ROTA 1: BUSCAR HISTÓRICO (CORRIGIDA) ---
+// 🎯 NOVA ROTA: BUSCAR PEDIDOS DA LOJA (O que estava faltando!)
+// Essa rota responde a: GET /api/pedidos?lojaId=...
+router.get('/', async (req, res) => {
+    try {
+        const { lojaId } = req.query;
+
+        if (!lojaId || lojaId === "null") {
+            return res.json([]); // Retorna vazio se não tiver ID
+        }
+
+        // Busca pedidos daquela loja específica e ordena pelos mais novos
+        const pedidos = await Pedido.find({ lojaId }).sort({ createdAt: -1 });
+        res.json(pedidos);
+    } catch (err) {
+        console.error("Erro ao buscar pedidos da loja:", err);
+        res.status(500).json({ erro: "Vixe! Erro ao carregar pedidos." });
+    }
+});
+
+// --- ROTA 1: BUSCAR HISTÓRICO DO CLIENTE ---
 router.get('/meus-pedidos', auth, async (req, res) => {
     try {
         const pedidos = await Pedido.find({ usuarioId: req.usuarioId }).sort({ createdAt: -1 });
         res.json(pedidos);
     } catch (err) {
-        res.status(500).json({ erro: "Erro ao buscar pedidos." });
+        res.status(500).json({ erro: "Erro ao buscar seus pedidos." });
     }
 });
 
-// --- ROTA 2: SALVAR NOVO PEDIDO NO BANCO (NOVA!) ---
+// --- ROTA 2: SALVAR NOVO PEDIDO NO BANCO ---
 router.post('/novo', auth, async (req, res) => {
     try {
         const { lojaId, itens, subtotal, taxaEntrega, total, cliente, pagamento } = req.body;
@@ -36,6 +53,8 @@ router.post('/novo', auth, async (req, res) => {
             lojaId,
             usuarioId: req.usuarioId,
             itens,
+            subtotal,      // 👈 Adicionado para salvar certinho
+            taxaEntrega,   // 👈 Adicionado para salvar certinho
             total,
             cliente,
             pagamento,
