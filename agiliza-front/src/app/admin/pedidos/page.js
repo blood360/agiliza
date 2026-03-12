@@ -19,10 +19,18 @@ export default function HistoricoPedidos() {
     const carregarPedidosReais = async () => {
       try {
         const userJson = localStorage.getItem('@Agiliza:Usuario');
-        if (!userJson) return window.location.href = '/login';
+        console.log("DADOS NO STORAGE:", userJson);
+
+        //aqui eu removi isso (return window.location.href = '/login';)
+        if (!userJson) {
+          console.log("Não achei o usuário no localStorage.")
+          return;
+        }
         
         const usuario = JSON.parse(userJson);
         const lojaId = usuario.lojaId;
+        //adicionei isso para ver o que esta errado
+        console.log("BUSCANDO PEDIDOS NA LOJA:", lojaId) // esse é quem vai dedurar o erro
 
         if (!lojaId || lojaId === "null") return;
 

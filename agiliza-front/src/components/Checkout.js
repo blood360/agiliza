@@ -31,9 +31,9 @@ export default function Checkout({ aoFechar }) {
     setSalvando(true);
     const token = localStorage.getItem('agiliza_token');
 
-    try {
-      // 🛡️ 4. ENVIO PARA O BACKEND (Rota padrão)
-      // DICA: Verifique se sua rota no backend é /api/pedidos ou /api/pedidos/novo
+    try { //mensagem para identificar o id da loja que recebe o pedido
+      console.log("Enviando pedido para a loja ID:", loja?._id);
+      console.log("Dados do pedido:", {total: totalGeral, itens: corrinho.length});
       const res = await fetch(`${API_URL}/api/pedidos/novo`, { 
         method: 'POST',
         headers: {
