@@ -8,7 +8,7 @@ import API_URL from '@/config/api';
 export default function ConfigurarLoja() {
   const notify = useNotify();
   const [carregando, setCarregando] = useState(true);
-  const [lojaIdReal, setLojaIdReal] = useState(null); // 👈 Guardamos o ID aqui
+  const [lojaIdReal, setLojaIdReal] = useState(null); 
   
   const [config, setConfig] = useState({
     loja: '',
@@ -21,29 +21,36 @@ export default function ConfigurarLoja() {
   useEffect(() => {
     const carregarDados = async () => {
       const token = localStorage.getItem('agiliza_token');
-      try {
-        const resUser = await fetch(`${API_URL}/api/usuarios/perfil`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const user = await resUser.json();
+      const userJson = localStorage.getItem('@Agiliza:Usuario');
+      
+      let idEncontrado = null;
 
-        if (user.lojaId) {
-          setLojaIdReal(user.lojaId); // 👈 Salvamos pra usar depois
-          
-          // 🛡️ CONFIRME SE A ROTA É ESSA MESMO OU APENAS /api/assinantes/${user.lojaId}
-          const resLoja = await fetch(`${API_URL}/api/assinantes/${user.lojaId}`);
-          const dadosLoja = await resLoja.json();
-          
-          setConfig({
-            loja: dadosLoja.loja,
-            whatsapp: dadosLoja.whatsapp,
-            slug: dadosLoja.slug,
-            valorMinimo: dadosLoja.valorMinimo || 0,
-            taxaEntrega: dadosLoja.taxaEntrega || 0
-          });
+      // 🛡️ 1. Tenta pegar o ID direto do LocalStorage (Mais rápido e garantido)
+      if (userJson) {
+        const usuario = JSON.parse(userJson);
+        idEncontrado = usuario.lojaId;
+        setLojaIdReal(idEncontrado);
+      }
+
+      try {
+        // 🛡️ 2. Busca os dados da loja apenas se tivermos o ID
+        if (idEncontrado && idEncontrado !== "null") {
+          const resLoja = await fetch(`${API_URL}/api/assinantes/${idEncontrado}`);
+          if (resLoja.ok) {
+            const dadosLoja = await resLoja.json();
+            setConfig({
+              loja: dadosLoja.loja || '',
+              whatsapp: dadosLoja.whatsapp || '',
+              slug: dadosLoja.slug || '',
+              valorMinimo: dadosLoja.valorMinimo || 0,
+              taxaEntrega: dadosLoja.taxaEntrega || 0
+            });
+          }
+        } else {
+           notify("Macho, faz o login de novo pra atualizar sua loja!", "warning");
         }
       } catch (err) {
-        notify("Vixe, erro ao carregar seus dados!", "error");
+        console.error("Erro ao carregar loja:", err);
       } finally {
         setCarregando(false);
       }
@@ -54,9 +61,14 @@ export default function ConfigurarLoja() {
   const salvarConfiguracoes = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('agiliza_token');
+
+    // 🛡️ TRAVA DE SEGURANÇA: Se o ID for null, a gente nem tenta mandar
+    if (!lojaIdReal || lojaIdReal === "null") {
+        return notify("Vixe! Não identifiquei sua loja. Saia e entre de novo.", "error");
+    }
     
     try {
-      // Agora usamos o lojaIdReal que já temos guardado
+      // 🚀 Agora a URL vai certinha, sem o "null"
       const res = await fetch(`${API_URL}/api/assinantes/${lojaIdReal}`, {
         method: 'PUT',
         headers: { 
@@ -65,22 +77,25 @@ export default function ConfigurarLoja() {
         },
         body: JSON.stringify({
           ...config,
+          // 🔥 Pequeno truque: Se o slug estiver vazio, cria um básico
+          slug: config.slug || config.loja.toLowerCase().replace(/ /g, '-'),
           valorMinimo: Number(config.valorMinimo),
           taxaEntrega: Number(config.taxaEntrega)
         })
       });
 
       if (res.ok) {
-        notify("Loja atualizada no banco de dados, patrão! 🚀", "success");
+        notify("Loja atualizada com sucesso, patrão! 🚀", "success");
       } else {
-        notify("Erro ao salvar no servidor.", "error");
+        const erro = await res.json();
+        notify(erro.erro || "Erro ao salvar no servidor.", "error");
       }
     } catch (err) {
       notify("Macho, deu erro na conexão!", "error");
     }
   };
 
-  if (carregando) return <p style={{padding: '20px'}}>Carregando as configurações, aguarde um tiquinho...</p>;
+  if (carregando) return <p style={{padding: '20px'}}>Buscando as configurações no banco... 🌵</p>;
 
   return (
     <div className={styles.container}>
@@ -90,8 +105,6 @@ export default function ConfigurarLoja() {
       </header>
 
       <form onSubmit={salvarConfiguracoes} className={styles.form}>
-        
-        {/* SEÇÃO 1: IDENTIDADE */}
         <section className={styles.secao}>
           <h2>Identidade e Link</h2>
           <div className={styles.campo}>
@@ -101,6 +114,15 @@ export default function ConfigurarLoja() {
               value={config.loja}
               onChange={(e) => setConfig({...config, loja: e.target.value})}
               required
+            />
+          </div>
+          <div className={styles.campo}>
+            <label>Link da Loja (Slug)</label>
+            <input 
+              type="text" 
+              value={config.slug}
+              onChange={(e) => setConfig({...config, slug: e.target.value})}
+              placeholder="ex: hamburgueria-sua-loja"
             />
           </div>
           <div className={styles.campo}>
@@ -114,41 +136,34 @@ export default function ConfigurarLoja() {
           </div>
         </section>
 
-        {/* SEÇÃO 2: REGRAS DE NEGÓCIO (O QUE TU PEDIU!) */}
         <section className={styles.secao}>
           <h2>Regras de Entrega e Venda 💰</h2>
-          
           <div className={styles.gridConfig}>
             <div className={styles.campo}>
-              <label>Valor Mínimo do Pedido (R$)</label>
+              <label>Valor Mínimo (R$)</label>
               <input 
                 type="number" 
                 step="0.01"
                 value={config.valorMinimo}
                 onChange={(e) => setConfig({...config, valorMinimo: e.target.value})}
-                placeholder="Ex: 50.00"
                 required
               />
-              <small>O cliente não conseguirá finalizar se o carrinho for menor que isso.</small>
             </div>
-
             <div className={styles.campo}>
-              <label>Taxa de Entrega Fixa (R$)</label>
+              <label>Taxa de Entrega (R$)</label>
               <input 
                 type="number" 
                 step="0.01"
                 value={config.taxaEntrega}
                 onChange={(e) => setConfig({...config, taxaEntrega: e.target.value})}
-                placeholder="Ex: 7.00"
                 required
               />
-              <small>Esse valor será somado ao total no carrinho.</small>
             </div>
           </div>
         </section>
 
         <button type="submit" className={styles.btnSalvar}>
-          Salvar Configurações no Banco 💾
+          Salvar Configurações ✅
         </button>
       </form>
     </div>
