@@ -13,6 +13,7 @@ export default function DashboardAdmin() {
   const [abaAtiva, setAbaAtiva] = useState('Pendente');
   const [carregando, setCarregando] = useState(true);
   const notify = useNotify();
+  const audioRef = useRef(null);
 
   // 🛡️ 1. FUNÇÃO MESTRA (Agora fora do useEffect pra ninguém se perder)
   const carregarTudo = useCallback(async () => {
@@ -49,15 +50,28 @@ export default function DashboardAdmin() {
             new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
           }
           setPedidos(novosPedidos);
-        }
-      }
-    } catch (err) {
-      console.error("Erro ao carregar dados:", err);
-    } finally {
-      setCarregando(false);
-    }
-  }, [pedidos.length]); // Só recria se a quantidade de pedidos mudar
 
+          // 🕵️‍♂️ Verifica se tem algum pedido pendente na lista
+          const temPendente = novosPedidos.some(p => p.status === 'Pendente');
+
+          if (temPendente) {
+            // Se ainda não criou o objeto de áudio, cria agora
+            if (!audioRef.current) {
+              audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+              audioRef.current.loop = true; // 👈 O segredo da insistência!
+            }
+            
+            // Toca o bicho se ele estiver pausado
+            if (audioRef.current.paused) {
+              audioRef.current.play().catch(() => {});
+            }
+          } else {
+            // ✅ Se não tem mais nenhum pendente, o lojista já aceitou tudo. SILÊNCIO!
+            if (audioRef.current) {
+              audioRef.current.pause();
+              audioRef.current.currentTime = 0;
+            }
+          }
   // 🔄 2. O MONITOR (Chama a função a cada 10 segundos)
   useEffect(() => {
     carregarTudo();

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Assinante = require('../models/Assinante');
 
-// 🔍 1. BUSCAR POR SLUG
+// 🔍 1. BUSCAR POR SLUG (Vitrine do Cliente)
 router.get('/loja/:slug', async (req, res) => {
     try {
         const { slug } = req.params;
@@ -19,24 +19,23 @@ router.get('/loja/:slug', async (req, res) => {
     }
 });
 
-// 📋 2. BUSCAR TODOS
+// 📋 2. BUSCAR TODOS (Painel Admin Geral)
 router.get('/', async (req, res) => {
     try {
-        // O sort ajuda a ver os novos primeiro
         const assinantes = await Assinante.find().sort({ createdAt: -1 });
-        
         res.json(assinantes || []); 
     } catch (err) {
-        
         console.error("❌ ERRO CRÍTICO NO GET ASSINANTES:", err);
         res.status(500).json({ erro: "Erro ao buscar no banco: " + err.message });
     }
 });
 
-// 🔍 6. BUSCAR POR ID (Essencial para o Dashboard do Lojista)
+// 🔍 3. BUSCAR POR ID (Dashboard do Lojista)
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        if (id === "null" || !id) return res.status(400).json({ erro: "ID inválido" });
+
         const loja = await Assinante.findById(id);
         
         if (!loja) {
@@ -49,7 +48,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// 🚀 3. CRIAR NOVO
+// 🚀 4. CRIAR NOVO (Cadastro de Lojista)
 router.post('/', async (req, res) => {
     try {
         const { loja, dono, plano, whatsapp, vencimento } = req.body;
@@ -58,16 +57,9 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ erro: "Macho, faltou nome da loja ou do dono!" });
         }
 
-        // 📅 Lógica de Vencimento corrigida para evitar "Invalid Date"
-        let dataFinal;
-        if (!vencimento || vencimento === "") {
-            dataFinal = new Date();
-            dataFinal.setDate(dataFinal.getDate() + 30);
-        } else {
-            dataFinal = new Date(vencimento);
-        }
+        let dataFinal = vencimento ? new Date(vencimento) : new Date();
+        if (!vencimento) dataFinal.setDate(dataFinal.getDate() + 30);
 
-        // 🔗 Gerador de Slug blindado
         const slug = loja.toLowerCase().trim()
             .normalize('NFD').replace(/[\u0300-\u036f]/g, "") 
             .replace(/[^\w\s-]/g, '')
@@ -80,7 +72,8 @@ router.post('/', async (req, res) => {
             dono, 
             plano: plano || 'Iniciante', 
             vencimento: dataFinal, 
-            whatsapp: whatsapp || '' 
+            whatsapp: whatsapp || '',
+            status: 'Ativo' // Toda loja nasce aberta
         });
 
         const salvo = await novo.save();
@@ -91,26 +84,40 @@ router.post('/', async (req, res) => {
     }
 });
 
-// 📝 4. ATUALIZAR (PUT)
+// 📝 5. ATUALIZAR (Onde a mágica do "Pausar" acontece)
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const dadosAtualizados = req.body;
+        // 🛡️ Pegamos os dados do body de forma explícita para garantir o salvamento
+        const { loja, whatsapp, status, taxaEntrega, valorMinimo, slug } = req.body;
 
-        const loja = await Assinante.findByIdAndUpdate(id, dadosAtualizados, { new: true });
+        const lojaAtualizada = await Assinante.findByIdAndUpdate(
+            id, 
+            { 
+                $set: { 
+                    loja, 
+                    whatsapp, 
+                    status, // 👈 Aqui ele salva se tá "Ativo" ou "Pausado"
+                    taxaEntrega, 
+                    valorMinimo, 
+                    slug 
+                } 
+            }, 
+            { new: true, runValidators: true }
+        );
 
-        if (!loja) {
+        if (!lojaAtualizada) {
             return res.status(404).json({ erro: "Não consegui achar essa loja pra atualizar." });
         }
 
-        res.json({ mensagem: "Loja atualizada com sucesso! 🚀", loja });
+        res.json({ mensagem: "Loja atualizada com sucesso! 🚀", loja: lojaAtualizada });
     } catch (err) {
         console.error("❌ Erro no PUT por ID:", err);
-        res.status(500).json({ erro: "Erro ao atualizar dados." });
+        res.status(500).json({ erro: "Erro ao atualizar dados: " + err.message });
     }
 });
 
-// 🗑️ 5. DELETAR
+// 🗑️ 6. DELETAR
 router.delete('/:id', async (req, res) => {
     try {
         await Assinante.findByIdAndDelete(req.params.id);

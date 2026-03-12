@@ -53,8 +53,8 @@ router.post('/novo', auth, async (req, res) => {
             lojaId,
             usuarioId: req.usuarioId,
             itens,
-            subtotal,      // 👈 Adicionado para salvar certinho
-            taxaEntrega,   // 👈 Adicionado para salvar certinho
+            subtotal,
+            taxaEntrega,
             total,
             cliente,
             pagamento,
