@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'; // 👈 Adicionei o useCallback
+import { useState, useEffect, useCallback, useRef } from 'react'; // 👈 useRef adicionado
 import Image from 'next/image';
 import styles from './admin.module.css';
 import Link from 'next/link';
@@ -13,21 +13,21 @@ export default function DashboardAdmin() {
   const [abaAtiva, setAbaAtiva] = useState('Pendente');
   const [carregando, setCarregando] = useState(true);
   const notify = useNotify();
-  const audioRef = useRef(null);
+  const audioRef = useRef(null); // 👈 Referência para o som não duplicar
 
-  // 🛡️ 1. FUNÇÃO MESTRA (Agora fora do useEffect pra ninguém se perder)
+  // 🛡️ 1. FUNÇÃO MESTRA: BUSCA DADOS E CONTROLA O SOM
   const carregarTudo = useCallback(async () => {
     try {
       const userJson = localStorage.getItem('@Agiliza:Usuario');
       if (!userJson) {
-         window.location.href = '/login';
-         return;
+          window.location.href = '/login';
+          return;
       }
       
       const usuario = JSON.parse(userJson);
       const lojaId = usuario.lojaId;
 
-      if (!lojaId || lojaId === "null" || lojaId === "undefined") {
+      if (!lojaId || lojaId === "null") {
         setCarregando(false);
         return;
       }
@@ -37,7 +37,8 @@ export default function DashboardAdmin() {
       if (resLoja.ok) {
         const dadosLoja = await resLoja.json();
         setLoja(dadosLoja);
-        setLojaAberta(dadosLoja.status_loja !== 'fechada');
+        // Ajustado para bater com o campo 'status' do seu backend
+        setLojaAberta(dadosLoja.status !== 'fechada');
       }
 
       // B. Busca Pedidos da Loja
@@ -45,52 +46,57 @@ export default function DashboardAdmin() {
       if (resPedidos.ok) {
         const novosPedidos = await resPedidos.json();
         if (Array.isArray(novosPedidos)) {
-          // Som de alerta para novos pedidos
-          if (novosPedidos.length > pedidos.length && novosPedidos.some(p => p.status === 'Pendente')) {
-            new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
-          }
           setPedidos(novosPedidos);
 
-          // 🕵️‍♂️ Verifica se tem algum pedido pendente na lista
+          // 🔔 LÓGICA DO SOM INSISTENTE
           const temPendente = novosPedidos.some(p => p.status === 'Pendente');
 
           if (temPendente) {
-            // Se ainda não criou o objeto de áudio, cria agora
             if (!audioRef.current) {
               audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-              audioRef.current.loop = true; // 👈 O segredo da insistência!
+              audioRef.current.loop = true; // 👈 Fica repetindo
             }
-            
-            // Toca o bicho se ele estiver pausado
             if (audioRef.current.paused) {
               audioRef.current.play().catch(() => {});
             }
           } else {
-            // ✅ Se não tem mais nenhum pendente, o lojista já aceitou tudo. SILÊNCIO!
+            // Se não tem pendente, silêncio total
             if (audioRef.current) {
               audioRef.current.pause();
               audioRef.current.currentTime = 0;
             }
           }
-  // 🔄 2. O MONITOR (Chama a função a cada 10 segundos)
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar dados:", err);
+    } finally {
+      setCarregando(false);
+    }
+  }, []); // Fecha carregarTudo
+
+  // 🔄 2. MONITOR: ATUALIZA A CADA 10 SEGUNDOS
   useEffect(() => {
     carregarTudo();
     const intervalo = setInterval(() => {
       carregarTudo();
     }, 10000); 
 
-    return () => clearInterval(intervalo);
-  }, [carregarTudo]); // Depende da função carregarTudo
+    return () => {
+      clearInterval(intervalo);
+      if (audioRef.current) audioRef.current.pause();
+    };
+  }, [carregarTudo]);
 
-  // --- Funções de Controle (Mantidas as suas, só com segurança extra) ---
+  // 🛑 3. PAUSAR/ABRIR VENDAS (Sincronizado com o Backend)
   const toggleLoja = async () => {
     if (!loja?._id) return;
-    const novoStatus = lojaAberta ? 'fechada' : 'aberta';
+    const novoStatus = lojaAberta ? 'fechada' : 'Ativo';
     try {
       const res = await fetch(`${API_URL}/api/assinantes/${loja._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status_loja: novoStatus })
+        body: JSON.stringify({ status: novoStatus }) // Envia como 'status'
       });
       if (res.ok) {
         setLojaAberta(!lojaAberta);
@@ -101,23 +107,24 @@ export default function DashboardAdmin() {
     }
   };
 
+  // ✅ 4. MUDAR STATUS DO PEDIDO (Aceitar/Concluir)
   const mudarStatus = async (id, novoStatus) => {
     try {
       const res = await fetch(`${API_URL}/api/pedidos/${id}`, {
-        method: 'PUT',
+        method: 'PUT', // Se seu backend usa router.put('/:id'...)
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: novoStatus })
       });
       if (res.ok) {
         setPedidos(prev => prev.map(p => p._id === id ? { ...p, status: novoStatus } : p));
-        notify(`Pedido: ${novoStatus}!`, "success");
+        notify(`Pedido ${novoStatus === 'Preparando' ? 'Aceito' : 'Concluído'}!`, "success");
       }
     } catch (err) {
-      notify("Erro ao atualizar", "error");
+      notify("Erro ao atualizar pedido", "error");
     }
   };
 
-  const totalVendas = pedidos.filter(p => p.status === 'Entregue').reduce((acc, p) => acc + p.total, 0);
+  const totalVendas = pedidos.filter(p => p.status === 'Entregue').reduce((acc, p) => acc + (p.total || 0), 0);
   const novosPedidosCount = pedidos.filter(p => p.status === 'Pendente').length;
 
   if (carregando) return <div className={styles.loader}>Arrochando os dados... 🌵</div>;
@@ -143,7 +150,7 @@ export default function DashboardAdmin() {
         <header className={styles.mainHeader}>
           <div className={styles.welcomeText}>
             <h1>{loja?.loja || 'Painel do Lojista'} 🏪</h1>
-            <p>Seja bem-vindo, {loja?.dono || 'Lojista'}. Veja o resumo da sua Loja.</p>
+            <p>Seja bem-vindo, {loja?.dono || 'Lojista'}.</p>
           </div>
           <div className={styles.lojaStatusCard}>
             <span className={lojaAberta ? styles.txtAberto : styles.txtFechado}>
@@ -159,17 +166,14 @@ export default function DashboardAdmin() {
           <div className={styles.statCard}>
             <span className={styles.statLabel}>Vendas Concluídas</span>
             <h3 className={styles.statValue}>R$ {totalVendas.toFixed(2)}</h3>
-            <span className={styles.statSub}>Total acumulado</span>
           </div>
           <div className={styles.statCard}>
             <span className={styles.statLabel}>Pedidos Hoje</span>
             <h3 className={styles.statValue}>{pedidos.length}</h3>
-            <span className={styles.statSub}>Volume total de transações</span>
           </div>
           <div className={styles.statCard}>
             <span className={styles.statLabel}>Novos Pendentes</span>
             <h3 className={`${styles.statValue} ${styles.alert}`}>{novosPedidosCount}</h3>
-            <span className={styles.statSub}>Aguardando sua ação</span>
           </div>
         </section>
 
@@ -195,11 +199,11 @@ export default function DashboardAdmin() {
                 <div key={pedido._id} className={styles.orderCard}>
                   <div className={styles.orderHead}>
                     <strong>#{pedido._id.slice(-4)}</strong>
-                    <span>{new Date(pedido.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    <span>{new Date(pedido.createdAt).toLocaleTimeString()}</span>
                   </div>
                   <div className={styles.orderBody}>
-                    <p className={styles.phone}>{pedido.telefone || pedido.cliente?.telefone}</p>
-                    <p className={styles.address}>{pedido.endereco || pedido.cliente?.endereco}</p>
+                    <p className={styles.phone}>{pedido.cliente?.whatsapp || pedido.cliente?.telefone}</p>
+                    <p className={styles.address}>{pedido.cliente?.endereco}</p>
                     <div className={styles.itemsList}>
                       {pedido.itens?.map((it, i) => <span key={i}>{it.qtd}x {it.nome}</span>)}
                     </div>
