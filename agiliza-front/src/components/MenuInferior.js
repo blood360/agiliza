@@ -8,12 +8,8 @@ export default function MenuInferior() {
     const params = useParams();
     const slug = params.slug;
 
-    // Se estivermos dentro de uma loja, o 'Home' volta para a vitrine da loja
-    // Caso contrário, volta para o explorar.
     const linkHome = slug ? `/${slug}` : '/explorar';
 
-    // Pedidos e Perfil agora são GLOBAIS. 
-    // Não importa em qual loja o cabra esteja, ele quer ver os SEUS dados.
     const linkPedidos = '/pedidos';
     const linkPerfil = '/perfil'; 
 
