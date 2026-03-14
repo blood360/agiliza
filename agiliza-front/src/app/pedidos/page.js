@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'; // 👈 Adicionado com cuidado
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import API_URL from '@/config/api';
 import MenuInferior from '@/components/MenuInferior';
@@ -27,7 +27,6 @@ export default function PedidosPage() {
       const data = await res.json();
       
       if (res.ok) {
-        // 🔔 Lógica de Notificação e Som
         data.forEach(p => {
           const statusAntigo = statusAnteriorRef.current[p._id];
           
@@ -37,12 +36,11 @@ export default function PedidosPage() {
             
             // Notificação personalizada baseada no seu Dashboard (3 status)
             let msg = `O status do seu pedido na ${p.nomeLoja} mudou para: ${p.status}`;
-            if (p.status === 'Preparando') msg = `👨‍🍳 A ${p.nomeLoja} começou a preparar seu pedido!`;
-            if (p.status === 'Entregue') msg = `✅ Seu pedido da ${p.nomeLoja} foi entregue. Bom apetite!`;
+            if (p.status === 'Preparando') msg = `A ${p.nomeLoja} começou a preparar seu pedido!`;
+            if (p.status === 'Entregue') msg = `✅ Seu pedido da ${p.nomeLoja} foi enviado! Obrigado.`;
             
             notify(msg, "success");
           }
-          // Salva o status atual na memória para a próxima comparação
           statusAnteriorRef.current[p._id] = p.status;
         });
 
@@ -60,21 +58,21 @@ export default function PedidosPage() {
     carregarPedidos(true); // Carrega a primeira vez com o loader da moto
 
     const intervalo = setInterval(() => {
-      carregarPedidos(); // Fica vigiando o banco em silêncio
+      carregarPedidos();
     }, 15000); 
 
-    return () => clearInterval(intervalo); // Limpa o timer ao sair da página
+    return () => clearInterval(intervalo);
   }, [carregarPedidos]);
 
-  // 🎨 3. FUNÇÃO PARA DEFINIR A COR DO STATUS (Baseado nos seus 3 status)
+  // 🎨 3. FUNÇÃO PARA DEFINIR A COR DO STATUS
   const getCorStatus = (status) => {
-    if (status === 'Pendente') return '#f1c40f';   // Amarelo
-    if (status === 'Preparando') return '#3498db'; // Azul
-    if (status === 'Entregue') return '#27ae60';   // Verde
-    return '#666'; // Cor padrão
+    if (status === 'Pendente') return '#f1c40f';
+    if (status === 'Preparando') return '#3498db';
+    if (status === 'Entregue') return '#27ae60';
+    return '#666';
   };
 
-  // --- RENDERIZAÇÃO DO LOADER (Mantido exatamente como o seu) ---
+  // --- RENDERIZAÇÃO DO LOADER ---
   if (carregando) {
     return (
       <div className={styles.loaderContainer}>
@@ -98,12 +96,12 @@ export default function PedidosPage() {
               <label>Loja: {p.nomeLoja}</label>
               <p>Total: R$ {p.total.toFixed(2)}</p>
               
-              {/* 🌈 STATUS COM COR DINÂMICA */}
+              {/* STATUS COM COR DINÂMICA */}
               <p>Status: <strong style={{ color: getCorStatus(p.status) }}>{p.status}</strong></p>
             </div>
           ))
         ) : (
-          <p className={styles.loaderText}>Nenhum pedido feito ainda. 🌵</p>
+          <p className={styles.loaderText}>Nenhum pedido feito ainda.</p>
         )}
       </main>
       <MenuInferior />

@@ -707,3 +707,10 @@
   cursor: pointer;
   margin-top: 15px;
 }
+
+.gradePagamento { display: flex; gap: 10px; margin: 10px 0; }
+.btnRadio { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: white; cursor: pointer; }
+.btnAtivo { flex: 1; padding: 10px; border: 2px solid #27ae60; border-radius: 8px; background: #e8f5e9; font-weight: bold; }
+.inputObs { width: 100%; height: 60px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px; font-family: inherit; }
+.inputTroco { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #ffc107; }
+.btnPequeno { background: #eee; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }

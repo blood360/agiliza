@@ -7,7 +7,17 @@ import styles from './perfil.module.css';
 import { useNotify } from '@/context/ToastContext';
 
 export default function PerfilPage() {
-  const [usuario, setUsuario] = useState({ nome: '', email: '', telefone: '', endereco: '', referencia: '' });
+  // 📍 Estado atualizado com o endereço "fatiado"
+  const [usuario, setUsuario] = useState({ 
+    nome: '', 
+    email: '', 
+    telefone: '', 
+    rua: '', 
+    numero: '', 
+    bairro: '', 
+    referencia: '' 
+  });
+  
   const [editando, setEditando] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -24,7 +34,16 @@ export default function PerfilPage() {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if (res.ok) setUsuario(data);
+        if (res.ok) {
+          // Garante que campos nulos não quebrem o formulário
+          setUsuario({
+            ...data,
+            rua: data.rua || '',
+            numero: data.numero || '',
+            bairro: data.bairro || '',
+            referencia: data.referencia || ''
+          });
+        }
       } catch (err) {
         notify("Erro ao carregar seus dados.", "error");
       } finally {
@@ -49,21 +68,18 @@ export default function PerfilPage() {
         body: JSON.stringify({
             nome: usuario.nome,
             telefone: usuario.telefone,
-            endereco: usuario.endereco,
+            rua: usuario.rua,
+            numero: usuario.numero,
+            bairro: usuario.bairro,
             referencia: usuario.referencia
         })
       });
 
       if (res.ok) {
-        // 1. Pega os dados que o servidor acabou de salvar
         const dadosAtualizados = await res.json();
-        
         setUsuario(dadosAtualizados); 
-
-        // 3. Atualiza o backup no localStorage
         localStorage.setItem('@Agiliza:Perfil', JSON.stringify(dadosAtualizados));
-
-        notify("Perfil atualizado com sucesso! 🚀", "success");
+        notify("Perfil atualizado! Agora o motoboy te acha até no escuro! 🚀", "success");
         setEditando(false);
       } else {
         notify("Vixe! Não consegui salvar no servidor.", "error");
@@ -73,7 +89,7 @@ export default function PerfilPage() {
     } finally {
       setSalvando(false);
     }
-};
+  };
 
   if (carregando) {
     return (
@@ -114,17 +130,34 @@ export default function PerfilPage() {
             ) : <p>{usuario.telefone || "Não cadastrado"}</p>}
           </div>
 
+          {/* 🏠 SEÇÃO DE ENDEREÇO FATIADO */}
           <div className={styles.card}>
-            <label>📍 Endereço de Entrega</label>
+            <label>📍 Rua / Logradouro</label>
             {editando ? (
-              <input type="text" className={styles.inputEdit} value={usuario.endereco} onChange={e => setUsuario({...usuario, endereco: e.target.value})} />
-            ) : <p>{usuario.endereco || "Nenhum endereço salvo"}</p>}
+              <input type="text" className={styles.inputEdit} value={usuario.rua} onChange={e => setUsuario({...usuario, rua: e.target.value})} placeholder="Nome da rua..." />
+            ) : <p>{usuario.rua || "Não informado"}</p>}
+          </div>
+
+          <div className={styles.row}>
+            <div className={styles.card} style={{ flex: 1 }}>
+              <label>🔢 Número</label>
+              {editando ? (
+                <input type="text" className={styles.inputEdit} value={usuario.numero} onChange={e => setUsuario({...usuario, numero: e.target.value})} placeholder="Ex: 123" />
+              ) : <p>{usuario.numero || "S/N"}</p>}
+            </div>
+
+            <div className={styles.card} style={{ flex: 2 }}>
+              <label>🏘️ Bairro</label>
+              {editando ? (
+                <input type="text" className={styles.inputEdit} value={usuario.bairro} onChange={e => setUsuario({...usuario, bairro: e.target.value})} placeholder="Nome do bairro..." />
+              ) : <p>{usuario.bairro || "Não informado"}</p>}
+            </div>
           </div>
 
           <div className={styles.card}>
             <label>🏷️ Referência</label>
             {editando ? (
-              <input type="text" className={styles.inputEdit} value={usuario.referencia} onChange={e => setUsuario({...usuario, referencia: e.target.value})} />
+              <input type="text" className={styles.inputEdit} value={usuario.referencia} onChange={e => setUsuario({...usuario, referencia: e.target.value})} placeholder="Perto de onde?" />
             ) : <p>{usuario.referencia || "Não informado"}</p>}
           </div>
 

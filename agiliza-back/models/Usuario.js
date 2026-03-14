@@ -9,7 +9,7 @@ const UsuarioSchema = new mongoose.Schema({
         type: String, 
         required: true, 
         unique: true,
-        lowercase: true // Garante que o e-mail sempre seja salvo em minúsculo
+        lowercase: true 
     },
     senha: { 
         type: String, 
@@ -20,9 +20,17 @@ const UsuarioSchema = new mongoose.Schema({
         required: true 
     },
     
-    // --- CAMPOS PARA ENTREGA EM MAGÉ ---
-    // Agora o banco sabe onde guardar esses dados!
-    endereco: { 
+    // --- 📍 LOGÍSTICA DE ENTREGA AS AUTOMAÇÕES ---
+    // Fatiamos o endereço para o motoboy não se perder!
+    rua: { 
+        type: String, 
+        default: '' 
+    },
+    numero: { 
+        type: String, 
+        default: '' 
+    },
+    bairro: { 
         type: String, 
         default: '' 
     },
@@ -30,7 +38,13 @@ const UsuarioSchema = new mongoose.Schema({
         type: String, 
         default: '' 
     },
-    // -----------------------------------
+    // Mantemos esse aqui por enquanto para compatibilidade, 
+    // mas o foco agora é nos campos acima!
+    endereco: { 
+        type: String, 
+        default: '' 
+    },
+    // ---------------------------------------------
 
     tipo: { 
         type: String, 
@@ -43,7 +57,7 @@ const UsuarioSchema = new mongoose.Schema({
         default: null 
     }
 }, { 
-    timestamps: true // Cria automaticamente o 'createdAt' e 'updatedAt'
+    timestamps: true 
 });
 
 module.exports = mongoose.model('Usuario', UsuarioSchema);

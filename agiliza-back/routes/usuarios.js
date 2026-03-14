@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs'); // Mantendo apenas UM aqui no topo
+const bcrypt = require('bcryptjs'); 
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
-const Assinante = require('../models/Assinante'); // 👈 Tu esqueceu de importar esse modelo!
+const Assinante = require('../models/Assinante');
 
 // --- MIDDLEWARE DE AUTENTICAÇÃO ---
 const auth = async (req, res, next) => {
@@ -21,7 +21,7 @@ const auth = async (req, res, next) => {
     }
 };
 
-// --- ROTA DE PERFIL ---
+// --- ROTA DE PERFIL (BUSCA) ---
 router.get('/perfil', auth, async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.usuario.id).select('-senha');
@@ -32,39 +32,56 @@ router.get('/perfil', auth, async (req, res) => {
     }
 });
 
-// 🔑 ROTA PARA O AUTO-REGISTRO DO LOJISTA (Blindada!)
-router.post('/registrar-lojista-self', async (req, res) => {
-    // 🔍 DEBUG: Isso vai mostrar no log do Render o que o servidor recebeu
-    console.log("DADOS RECEBIDOS NO BACKEND:", req.body);
+// --- ROTA PARA ATUALIZAR PERFIL (A MÁGICA TÁ AQUI!) ---
+router.put('/perfil', auth, async (req, res) => {
+    try {
+        const updates = Object.keys(req.body);
+        
+        // 🛡️ ADICIONADOS OS NOVOS CAMPOS NA LISTA DE PERMISSÃO
+        const camposPermitidos = ['nome', 'telefone', 'rua', 'numero', 'bairro', 'referencia', 'endereco'];
+        
+        const operacaoValida = updates.every(update => camposPermitidos.includes(update));
 
+        if (!operacaoValida) {
+            return res.status(400).send({ erro: 'Vixe! Tu tá tentando salvar um campo que não existe no sistema.' });
+        }
+
+        const usuario = await Usuario.findById(req.usuario.id);
+        if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
+
+        updates.forEach(update => usuario[update] = req.body[update]);
+        await usuario.save();
+
+        res.send(usuario);
+    } catch (e) {
+        res.status(400).send({ erro: "Erro ao atualizar perfil: " + e.message });
+    }
+});
+
+// 🔑 ROTA PARA O AUTO-REGISTRO DO LOJISTA
+router.post('/registrar-lojista-self', async (req, res) => {
     try {
         const { nome, email, senha, telefone, lojaId } = req.body;
 
-        // 🛡️ Validação manual rápida antes de ir pro banco
         if (!email || !senha || !lojaId) {
             return res.status(400).json({ erro: "Macho, falta dado! E-mail, senha e ID da loja são obrigatórios." });
         }
 
         const lojaExiste = await Assinante.findById(lojaId);
-        if (!lojaExiste) {
-            return res.status(400).json({ erro: "Desculpe, esse código de loja não existe ou não está autorizado." });
-        }
+        if (!lojaExiste) return res.status(400).json({ erro: "Código de loja não autorizado." });
 
         const donoExistente = await Usuario.findOne({ lojaId });
-        if(donoExistente) {
-            return res.status(400).json({erro: "Essa loja já tem um dono cadastrado!"});
-        }
+        if(donoExistente) return res.status(400).json({erro: "Essa loja já tem um dono!"});
 
-        // CORRIGIDO: findOne (sem o 'e' no meio)
         const emailUsado = await Usuario.findOne({ email });
-        if(emailUsado) return res.status(400).json({erro: "Este e-mail já está sendo usado!"});
+        if(emailUsado) return res.status(400).json({erro: "Este e-mail já está em uso!"});
 
         const salt = await bcrypt.genSalt(10);
         const senhaHash = await bcrypt.hash(senha, salt);
 
         const novoLojista = new Usuario({
             nome,
-            email, // <--- Aqui o Mongoose tava reclamando
+            email,
             senha: senhaHash,
             telefone,
             tipo: 'lojista',
@@ -72,11 +89,10 @@ router.post('/registrar-lojista-self', async (req, res) => {
         });
 
         await novoLojista.save();
-        res.status(201).json({ mensagem: "Acesso do lojista criado com sucesso! 🚀" });
+        res.status(201).json({ mensagem: "Acesso criado com sucesso! 🚀" });
 
     } catch (err) {
-        console.error("ERRO NO REGISTRO:", err.message);
-        res.status(500).json({ erro: "Erro interno no servidor: " + err.message });
+        res.status(500).json({ erro: "Erro interno: " + err.message });
     }
 });
 
@@ -99,28 +115,9 @@ router.post('/registrar', async (req, res) => {
         });
 
         await novoUsuario.save();
-        res.status(201).json({ mensagem: "Usuário cadastrado com sucesso!" });
+        res.status(201).json({ mensagem: "Usuário cadastrado!" });
     } catch (err) {
         res.status(500).json({ erro: "Erro ao registrar: " + err.message });
-    }
-});
-
-// --- ROTA PARA ATUALIZAR PERFIL ---
-router.put('/perfil', auth, async (req, res) => {
-    try {
-        const updates = Object.keys(req.body);
-        const camposPermitidos = ['nome', 'telefone', 'endereco', 'referencia'];
-        const operacaoValida = updates.every(update => camposPermitidos.includes(update));
-
-        if (!operacaoValida) return res.status(400).send({ erro: 'Atualização inválida!' });
-
-        const usuario = await Usuario.findById(req.usuario.id);
-        updates.forEach(update => usuario[update] = req.body[update]);
-        await usuario.save();
-
-        res.send(usuario);
-    } catch (e) {
-        res.status(400).send({ erro: "Erro ao atualizar perfil: " + e.message });
     }
 });
 
@@ -128,31 +125,20 @@ router.put('/perfil', auth, async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
-        
-        // 1. Garante que o email seja tratado igual no registro
         const emailLimpo = email.trim().toLowerCase();
-        
-        // 2. Busca o cabra no banco
         const usuario = await Usuario.findOne({ email: emailLimpo });
         
-        if (!usuario) {
-            return res.status(400).json({ erro: "E-mail ou senha incorretos." });
-        }
+        if (!usuario) return res.status(400).json({ erro: "E-mail ou senha incorretos." });
 
-        // 3. Compara a senha (bcryptjs já importado no topo)
         const senhaValida = await bcrypt.compare(senha, usuario.senha);
-        if (!senhaValida) {
-            return res.status(400).json({ erro: "E-mail ou senha incorretos." });
-        }
+        if (!senhaValida) return res.status(400).json({ erro: "E-mail ou senha incorretos." });
 
-        // 4. Gera o Token com ID e Tipo
         const token = jwt.sign(
             { id: usuario._id, tipo: usuario.tipo },
             process.env.JWT_SECRET || 'secret_as_automacoes',
             { expiresIn: '7d' }
         );
 
-        // 5. RESPOSTA PARA O FRONTEND (Com o lojaId!)
         res.json({
             token,
             usuario: {
@@ -160,11 +146,10 @@ router.post('/login', async (req, res) => {
                 nome: usuario.nome,
                 tipo: usuario.tipo,
                 email: usuario.email,
-                lojaId: usuario.lojaId // 👈 ESSENCIAL: Pro dashboard saber quem é a loja!
+                lojaId: usuario.lojaId
             }
         });
     } catch (err) {
-        console.error("Erro no servidor no Login:", err.message);
         res.status(500).json({ erro: "Erro no servidor: " + err.message });
     }
 });
