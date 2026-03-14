@@ -142,7 +142,7 @@ export default function DashboardAdmin() {
           <Link href="/admin/perfil" className={styles.navItem}>⚙️ Configurações</Link>
         </nav>
         <div className={styles.upgradeBox}>
-          <Image src="/logoAS.png" alt="Logo AS" width={100} height={35} priority />
+          <Image src="/logoAS.png" alt="Logo AS" width={100} height={35} priority className={styles.logoSidebar}/>
         </div>
       </aside>
 

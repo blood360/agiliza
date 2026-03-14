@@ -84,39 +84,30 @@ router.post('/', async (req, res) => {
     }
 });
 
-// 📝 5. ATUALIZAR (Onde a mágica do "Pausar" acontece)
+// 📝 5. ATUALIZAR 
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        // 🛡️ Pegamos os dados do body de forma explícita para garantir o salvamento
-        const { loja, whatsapp, status, taxaEntrega, valorMinimo, slug } = req.body;
+        const dadosParaAtualizar = req.body;
 
         const lojaAtualizada = await Assinante.findByIdAndUpdate(
             id, 
-            { 
-                $set: { 
-                    loja, 
-                    whatsapp, 
-                    status, // 👈 Aqui ele salva se tá "Ativo" ou "Pausado"
-                    taxaEntrega, 
-                    valorMinimo, 
-                    slug 
-                } 
-            }, 
+            { $set: dadosParaAtualizar },
             { new: true, runValidators: true }
         );
 
         if (!lojaAtualizada) {
-            return res.status(404).json({ erro: "Não consegui achar essa loja pra atualizar." });
+            return res.status(404).json({ erro: "Macho, achei essa loja não!" });
         }
 
+        console.log(`✅ Loja ${lojaAtualizada.loja} atualizada para: ${lojaAtualizada.status}`);
         res.json({ mensagem: "Loja atualizada com sucesso! 🚀", loja: lojaAtualizada });
+
     } catch (err) {
-        console.error("❌ Erro no PUT por ID:", err);
+        console.error("❌ Erro no PUT por ID:", err.message);
         res.status(500).json({ erro: "Erro ao atualizar dados: " + err.message });
     }
 });
-
 // 🗑️ 6. DELETAR
 router.delete('/:id', async (req, res) => {
     try {

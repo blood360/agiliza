@@ -32,28 +32,31 @@
 .navItem:hover, .active { background: #ea1d2c; color: white; }
 
 .upgradeBox {
-  background: transparent; /* Removemos o fundo preto/cinza chamativo */
-  padding: 10px;
-  margin-top: auto; /* Mantém ela lá embaixo */
+  width: 100%;
+  /* Tiramos o height: 100% que tava esticando tudo */
+  height: auto; 
+  background: transparent;
+  padding: 20px 10px; /* Um espacinho a mais pra respirar */
+  margin-top: auto; /* Mantém ela lá embaixo no menu */
   display: flex;
   justify-content: center;
   align-items: center;
-  border-top: 1px solid #222; /* Uma linha bem fininha só pra separar */
+  border-top: 1px solid #222;
 }
 
 .logoSidebar {
-  max-width: 100px; /* Garante que ela nunca cresça demais */
-  height: auto;
-  opacity: 0.4; /* Deixa ela "apagadinha" pra ser discreta */
-  transition: opacity 0.3s ease; /* Efeito suave ao passar o mouse */
+  /* O pulo do gato: width fixo e height auto pra não distorcer */
+  width: 100px !important; 
+  height: auto !important;
+  opacity: 0.4;
   filter: grayscale(100%);
-   object-fit: contain; /* Deixa ela cinza pra harmonizar com o menu */
+  transition: all 0.3s ease;
+  object-fit: contain; /* Garante que o desenho não suma */
 }
 
-/* Quando o lojista passar o mouse, a logo ganha vida */
 .upgradeBox:hover .logoSidebar {
   opacity: 1;
-  filter: grayscale(0%); /* Volta a cor original no hover */
+  filter: grayscale(0%);
 }
 
 
