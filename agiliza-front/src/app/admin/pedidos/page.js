@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import styles from '../admin.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
-import API_URL from '@/config/api'; // 👈 Vital para o banco real
+import API_URL from '@/config/api';
 import { useNotify } from '@/context/ToastContext';
 
 export default function HistoricoPedidos() {
@@ -14,23 +14,14 @@ export default function HistoricoPedidos() {
   const [carregando, setCarregando] = useState(true);
   const notify = useNotify();
 
-  // 🛡️ 1. BUSCA PEDIDOS REAIS DO BANCO
   useEffect(() => {
     const carregarPedidosReais = async () => {
       try {
         const userJson = localStorage.getItem('@Agiliza:Usuario');
-        console.log("DADOS NO STORAGE:", userJson);
-
-        //aqui eu removi isso (return window.location.href = '/login';)
-        if (!userJson) {
-          console.log("Não achei o usuário no localStorage.")
-          return;
-        }
+        if (!userJson) return;
         
         const usuario = JSON.parse(userJson);
         const lojaId = usuario.lojaId;
-        //adicionei isso para ver o que esta errado
-        console.log("BUSCANDO PEDIDOS NA LOJA:", lojaId) // esse é quem vai dedurar o erro
 
         if (!lojaId || lojaId === "null") return;
 
@@ -50,7 +41,6 @@ export default function HistoricoPedidos() {
     carregarPedidosReais();
   }, []);
 
-  // 📥 Função para exportar o relatório (Ajustada para os campos do MongoDB)
   const exportarRelatorio = () => {
     const cabecalho = "ID,Data,Cliente,Total,Status\n";
     const dados = pedidos.map(p => 
@@ -80,7 +70,7 @@ export default function HistoricoPedidos() {
     ? pedidos 
     : pedidos.filter(p => p.status === filtro);
 
-  if (carregando) return <div className={styles.loader}>Buscando o arquivo morto... 🌵</div>;
+  if (carregando) return <div className={styles.loader}>Buscando o arquivo...</div>;
 
   return (
     <div className={styles.dashboardWrapper}>
@@ -155,38 +145,71 @@ export default function HistoricoPedidos() {
           </table>
         </section>
 
-        {/* MODAL DE DETALHES (Sincronizado com o Checkout) */}
+        {/* MODAL DE DETALHES (Sincronizado com o Novo Backend) */}
         {isModalOpen && pedidoSelecionado && (
           <div className={styles.modalOverlay} onClick={fecharModal}>
             <div className={styles.modalDetalhes} onClick={e => e.stopPropagation()}>
               <header className={styles.modalHeader}>
-                <h2>Detalhes #{pedidoSelecionado._id.slice(-4)}</h2>
+                <h2>Pedido #{pedidoSelecionado._id.slice(-4)}</h2>
                 <button onClick={fecharModal} className={styles.btnClose}>&times;</button>
               </header>
               <div className={styles.modalBody}>
+                
+                {/* 📍 ENDEREÇO E CLIENTE */}
                 <section className={styles.infoBloco}>
-                  <h3>📍 Entrega</h3>
+                  <h3>📍 Logística de Entrega</h3>
                   <p><strong>Cliente:</strong> {pedidoSelecionado.cliente?.nome}</p>
-                  <p><strong>WhatsApp:</strong> {pedidoSelecionado.cliente?.whatsapp || pedidoSelecionado.cliente?.telefone}</p>
-                  <p><strong>Endereço:</strong> {pedidoSelecionado.cliente?.endereco}</p>
-                  <p><strong>Pagamento:</strong> {pedidoSelecionado.pagamento || 'Pix'}</p>
+                  <p><strong>Zap:</strong> {pedidoSelecionado.cliente?.whatsapp || pedidoSelecionado.cliente?.telefone}</p>
+                  
+                  <div className={styles.boxEndereco}>
+                    <p><strong>Endereço:</strong> {pedidoSelecionado.cliente?.rua}, {pedidoSelecionado.cliente?.numero}</p>
+                    <p><strong>Bairro:</strong> {pedidoSelecionado.cliente?.bairro}</p>
+                    {pedidoSelecionado.cliente?.referencia && (
+                        <p><small>Ref: {pedidoSelecionado.cliente?.referencia}</small></p>
+                    )}
+                  </div>
                 </section>
+
+                {/* 💰 PAGAMENTO E TROCO */}
                 <section className={styles.infoBloco}>
-                  <h3>🍔 Itens</h3>
+                  <h3>💰 Pagamento</h3>
+                  <p><strong>Método:</strong> {pedidoSelecionado.pagamento?.metodo || pedidoSelecionado.pagamento || 'Pix'}</p>
+                  
+                  {pedidoSelecionado.pagamento?.trocoPara && (
+                    <div className={styles.alertaTroco}>
+                       ⚠️ <strong>LEVAR TROCO PARA: R$ {pedidoSelecionado.pagamento.trocoPara.toFixed(2)}</strong>
+                    </div>
+                  )}
+                </section>
+
+                {/* 📝 OBSERVAÇÃO DO CLIENTE */}
+                {pedidoSelecionado.observacao && (
+                  <section className={styles.infoBloco}>
+                    <h3>📝 Observação do Cliente</h3>
+                    <div className={styles.cardObservacao}>
+                       "{pedidoSelecionado.observacao}"
+                    </div>
+                  </section>
+                )}
+
+                {/* 🍔 ITENS AGRUPADOS */}
+                <section className={styles.infoBloco}>
+                  <h3>🍔 Itens do Pedido</h3>
                   <div className={styles.listaItensModal}>
                     {pedidoSelecionado.itens?.map((item, index) => (
                       <div key={index} className={styles.itemLinha}>
-                        <span>{item.qtd || 1}x {item.nome}</span>
-                        <span>R$ {item.preco.toFixed(2)}</span>
+                        <span><strong>{item.quantidade || 1}x</strong> {item.nome}</span>
+                        <span>R$ {(item.preco * (item.quantidade || 1)).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
                   <div className={styles.totalModal}>
-                    <strong>Total:</strong>
+                    <span>Total do Pedido:</span>
                     <strong>R$ {pedidoSelecionado.total.toFixed(2)}</strong>
                   </div>
                 </section>
               </div>
+              
               <footer className={styles.modalFooter}>
                 <button onClick={() => window.print()} className={styles.btnImprimir}>🖨️ Imprimir Cupom</button>
                 <button onClick={fecharModal} className={styles.btnFecharModal}>Fechar</button>
