@@ -71,3 +71,25 @@
   text-align: center;
   color: #999;
 }
+
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white; padding: 30px; border-radius: 12px;
+  width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.modalContent input, .modalContent select {
+  width: 100%; padding: 10px; margin: 10px 0 20px 0;
+  border: 1px solid #ddd; border-radius: 6px;
+}
+
+.modalBotoes { display: flex; gap: 10px; }
+.btnSalvar { background: #27ae60; color: white; border: none; padding: 10px; flex: 2; border-radius: 6px; cursor: pointer; }
+.btnCancelar { background: #eee; color: #333; border: none; padding: 10px; flex: 1; border-radius: 6px; cursor: pointer; }

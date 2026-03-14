@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import styles from './perfil-admin.module.css';
 import Link from 'next/link';
+import Image from 'next/image'; // 🖼️ Para o preview
 import { useNotify } from '@/context/ToastContext';
 import API_URL from '@/config/api';
 
@@ -10,22 +11,22 @@ export default function ConfigurarLoja() {
   const [carregando, setCarregando] = useState(true);
   const [lojaIdReal, setLojaIdReal] = useState(null); 
   
+  // 📝 ESTADO ATUALIZADO (com Logo e Banner)
   const [config, setConfig] = useState({
     loja: '',
     whatsapp: '',
     slug: '',
     valorMinimo: 0,
-    taxaEntrega: 0
+    taxaEntrega: 0,
+    logo: '',  // 👈 Gaveta da Logo
+    banner: '' // 👈 Gaveta do Banner
   });
 
   useEffect(() => {
     const carregarDados = async () => {
-      const token = localStorage.getItem('agiliza_token');
       const userJson = localStorage.getItem('@Agiliza:Usuario');
-      
       let idEncontrado = null;
 
-      // 🛡️ 1. Tenta pegar o ID direto do LocalStorage (Mais rápido e garantido)
       if (userJson) {
         const usuario = JSON.parse(userJson);
         idEncontrado = usuario.lojaId;
@@ -33,24 +34,27 @@ export default function ConfigurarLoja() {
       }
 
       try {
-        // 🛡️ 2. Busca os dados da loja apenas se tivermos o ID
         if (idEncontrado && idEncontrado !== "null") {
           const resLoja = await fetch(`${API_URL}/api/assinantes/${idEncontrado}`);
           if (resLoja.ok) {
-            const dadosLoja = await resLoja.json();
+            const d = await resLoja.json();
+            // 📥 MAPEANDO OS DADOS REAIS
             setConfig({
-              loja: dadosLoja.loja || '',
-              whatsapp: dadosLoja.whatsapp || '',
-              slug: dadosLoja.slug || '',
-              valorMinimo: dadosLoja.valorMinimo || 0,
-              taxaEntrega: dadosLoja.taxaEntrega || 0
+              loja: d.loja || '',
+              whatsapp: d.whatsapp || '',
+              slug: d.slug || '',
+              valorMinimo: d.valorMinimo || 0,
+              taxaEntrega: d.taxaEntrega || 0,
+              // Usamos os placeholders padrão se ele não tiver enviado
+              logo: d.logo || 'https://via.placeholder.com/150', 
+              banner: d.banner || 'https://via.placeholder.com/800x200'
             });
           }
         } else {
-           notify("Macho, faz o login de novo pra atualizar sua loja!", "warning");
+            notify("Macho, faz o login de novo!", "warning");
         }
       } catch (err) {
-        console.error("Erro ao carregar loja:", err);
+        notify("Vixe! Erro ao carregar as configurações.", "error");
       } finally {
         setCarregando(false);
       }
@@ -62,13 +66,12 @@ export default function ConfigurarLoja() {
     e.preventDefault();
     const token = localStorage.getItem('agiliza_token');
 
-    // 🛡️ TRAVA DE SEGURANÇA: Se o ID for null, a gente nem tenta mandar
     if (!lojaIdReal || lojaIdReal === "null") {
-        return notify("Vixe! Não identifiquei sua loja. Saia e entre de novo.", "error");
+        return notify("Vixe! Saia e entre de novo pra eu saber quem é você.", "error");
     }
     
     try {
-      // 🚀 Agora a URL vai certinha, sem o "null"
+      // 🚀 SALVANDO TUDO (o ...config já inclui logo e banner)
       const res = await fetch(`${API_URL}/api/assinantes/${lojaIdReal}`, {
         method: 'PUT',
         headers: { 
@@ -77,7 +80,6 @@ export default function ConfigurarLoja() {
         },
         body: JSON.stringify({
           ...config,
-          // 🔥 Pequeno truque: Se o slug estiver vazio, cria um básico
           slug: config.slug || config.loja.toLowerCase().replace(/ /g, '-'),
           valorMinimo: Number(config.valorMinimo),
           taxaEntrega: Number(config.taxaEntrega)
@@ -85,10 +87,9 @@ export default function ConfigurarLoja() {
       });
 
       if (res.ok) {
-        notify("Loja atualizada com sucesso, patrão! 🚀", "success");
+        notify("Loja atualizada com sucesso, patrão! ✨", "success");
       } else {
-        const erro = await res.json();
-        notify(erro.erro || "Erro ao salvar no servidor.", "error");
+        notify("Erro ao salvar no servidor.", "error");
       }
     } catch (err) {
       notify("Macho, deu erro na conexão!", "error");
@@ -105,6 +106,43 @@ export default function ConfigurarLoja() {
       </header>
 
       <form onSubmit={salvarConfiguracoes} className={styles.form}>
+        
+        {/* 🖼️ SEÇÃO: IDENTIDADE VISUAL (O Prestígio) */}
+        <section className={styles.secao}>
+          <h2>Identidade Visual 🖼️</h2>
+          
+          {/* Card da Logo */}
+          <div className={styles.cardPreviewImage}>
+             <label>Sua Logo (Ícone)</label>
+             <div className={styles.boxLogoPreview}>
+                <img src={config.logo} alt="Sua Logo" className={styles.imgLogo} />
+                <input 
+                    type="text" 
+                    value={config.logo}
+                    onChange={(e) => setConfig({...config, logo: e.target.value})}
+                    placeholder="Cole o link da sua logo aqui (ex: link do facebook/insta)"
+                    required
+                />
+             </div>
+          </div>
+
+          {/* Card do Banner */}
+          <div className={styles.cardPreviewImage} style={{marginTop: '20px'}}>
+             <label>Seu Banner (Topo da Loja)</label>
+             <div className={styles.boxBannerPreview}>
+                <img src={config.banner} alt="Seu Banner" className={styles.imgBanner} />
+                <input 
+                    type="text" 
+                    value={config.banner}
+                    onChange={(e) => setConfig({...config, banner: e.target.value})}
+                    placeholder="Cole o link do seu banner aqui (ex: link do facebook/insta)"
+                    required
+                />
+             </div>
+          </div>
+        </section>
+
+        {/* 🏷️ SEÇÃO: IDENTIDADE E LINK */}
         <section className={styles.secao}>
           <h2>Identidade e Link</h2>
           <div className={styles.campo}>
@@ -136,6 +174,7 @@ export default function ConfigurarLoja() {
           </div>
         </section>
 
+        {/* 💰 SEÇÃO: REGRAS DE ENTREGA */}
         <section className={styles.secao}>
           <h2>Regras de Entrega e Venda 💰</h2>
           <div className={styles.gridConfig}>
