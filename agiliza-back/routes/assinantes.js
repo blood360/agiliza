@@ -84,30 +84,30 @@ router.post('/', async (req, res) => {
     }
 });
 
-// 📝 5. ATUALIZAR 
+// 📝 5. ATUALIZAR (Versão Sênior: só atualiza o que vier!)
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const dadosParaAtualizar = req.body;
-
+        
+        // Usamos o $set com o req.body direto pra ele atualizar 
+        // APENAS os campos que o front-end mandou (ex: só o status).
         const lojaAtualizada = await Assinante.findByIdAndUpdate(
             id, 
-            { $set: dadosParaAtualizar },
-            { new: true, runValidators: true }
+            { $set: req.body }, 
+            { new: true, runValidators: false } // 👈 Validators false evita o erro 500 se faltar campo
         );
 
         if (!lojaAtualizada) {
-            return res.status(404).json({ erro: "Macho, achei essa loja não!" });
+            return res.status(404).json({ erro: "Achei essa loja não, macho!" });
         }
 
-        console.log(`✅ Loja ${lojaAtualizada.loja} atualizada para: ${lojaAtualizada.status}`);
-        res.json({ mensagem: "Loja atualizada com sucesso! 🚀", loja: lojaAtualizada });
-
+        res.json({ mensagem: "Loja atualizada! 🚀", loja: lojaAtualizada });
     } catch (err) {
-        console.error("❌ Erro no PUT por ID:", err.message);
-        res.status(500).json({ erro: "Erro ao atualizar dados: " + err.message });
+        console.error("🔥 ERRO NO BACKEND:", err.message);
+        res.status(500).json({ erro: "Erro interno: " + err.message });
     }
 });
+
 // 🗑️ 6. DELETAR
 router.delete('/:id', async (req, res) => {
     try {

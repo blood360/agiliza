@@ -88,24 +88,38 @@ export default function DashboardAdmin() {
     };
   }, [carregarTudo]);
 
-  // 🛑 3. PAUSAR/ABRIR VENDAS (Sincronizado com o Backend)
-  const toggleLoja = async () => {
-    if (!loja?._id) return;
-    const novoStatus = lojaAberta ? 'fechada' : 'Ativo';
-    try {
-      const res = await fetch(`${API_URL}/api/assinantes/${loja._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: novoStatus }) // Envia como 'status'
-      });
-      if (res.ok) {
-        setLojaAberta(!lojaAberta);
-        notify(lojaAberta ? "Loja Fechada! 🔒" : "Loja Aberta! 🚀", "success");
-      }
-    } catch (err) {
-      notify("Erro ao mudar status", "error");
+  // 🛑 3. PAUSAR/ABRIR VENDAS (Versão Blindada)
+const toggleLoja = async () => {
+  if (!loja?._id) return;
+  
+  const novoStatus = lojaAberta ? 'fechada' : 'Ativo';
+  const token = localStorage.getItem('agiliza_token'); // 🛡️ Segurança em primeiro lugar
+
+  try {
+    const res = await fetch(`${API_URL}/api/assinantes/${loja._id}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` // 👈 Prestígio total!
+      },
+      body: JSON.stringify({ status: novoStatus }) 
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      // Atualizamos o estado baseado no que o servidor confirmou
+      setLojaAberta(data.loja.status !== 'fechada');
+      setLoja(data.loja);
+      notify(data.loja.status === 'fechada' ? "Loja Fechada! 🔒" : "Loja Aberta! 🚀", "success");
+    } else {
+      const erro = await res.json();
+      notify(erro.erro || "Vixe! O servidor recusou a mudança.", "error");
     }
-  };
+  } catch (err) {
+    console.error("Erro no toggle:", err);
+    notify("Erro de conexão com a AS Automações", "error");
+  }
+};
 
   // ✅ 4. MUDAR STATUS DO PEDIDO (Aceitar/Concluir)
   const mudarStatus = async (id, novoStatus) => {
