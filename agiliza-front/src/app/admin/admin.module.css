@@ -46,7 +46,8 @@
   height: auto;
   opacity: 0.4; /* Deixa ela "apagadinha" pra ser discreta */
   transition: opacity 0.3s ease; /* Efeito suave ao passar o mouse */
-  filter: grayscale(100%); /* Deixa ela cinza pra harmonizar com o menu */
+  filter: grayscale(100%);
+   object-fit: contain; /* Deixa ela cinza pra harmonizar com o menu */
 }
 
 /* Quando o lojista passar o mouse, a logo ganha vida */
@@ -55,11 +56,6 @@
   filter: grayscale(0%); /* Volta a cor original no hover */
 }
 
-.logoSidebar {
-  max-width: 100%;
-  height: auto;
-  object-fit: contain; /* Garante que a logo não distorça */
-}
 
 /* Área de Conteúdo Principal */
 .mainContent { margin-left: 260px; flex: 1; padding: 40px; }
@@ -431,14 +427,14 @@
 
 /* Estilo do botão quando ESTÁ ATIVO (Selecionado) */
 .filterActive {
-  background: #ea1d2c; /* Vermelho padrão da AS Agiliza */
+  background: #ea1d2c;
   color: #fff;
   border: 1px solid #ea1d2c;
   padding: 10px 20px;
   border-radius: 30px;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(234, 29, 44, 0.2); /* Sombra leve pra dar profundidade */
+  box-shadow: 0 4px 10px rgba(234, 29, 44, 0.2);
   transition: all 0.3s ease;
   font-size: 0.9rem;
 }
@@ -447,3 +443,9 @@
 .alertaTroco { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba; margin-top: 5px; font-weight: bold; }
 .cardObservacao { background: #eef2f7; padding: 10px; border-radius: 8px; font-style: italic; color: #2c3e50; border: 1px dashed #3498db; }
 .itemLinha strong { color: #e67e22; font-size: 1.1em; }
+
+.contêinerPrincipalDoModal {
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px;
+}
