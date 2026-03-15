@@ -2,7 +2,20 @@ const express = require('express');
 const router = express.Router();
 const Cupom = require('../models/Cupom');
 
-// 🚀 Criar novo cupom (Painel do Lojista)
+// 📋 LISTAR TODOS OS CUPONS DA LOJA (O que estava faltando!)
+router.get('/', async (req, res) => {
+    try {
+        const { lojaId } = req.query;
+        if (!lojaId) return res.status(400).json({ erro: "Faltou o ID da loja, macho!" });
+
+        const cupons = await Cupom.find({ lojaId }).sort({ createdAt: -1 });
+        res.json(cupons);
+    } catch (err) {
+        res.status(500).json({ erro: "Erro ao buscar cupons: " + err.message });
+    }
+});
+
+// 🚀 CRIAR NOVO CUPOM
 router.post('/', async (req, res) => {
     try {
         const novo = new Cupom(req.body);
@@ -13,19 +26,13 @@ router.post('/', async (req, res) => {
     }
 });
 
-// 🔍 Validar cupom (Checkout do Cliente)
-router.post('/validar', async (req, res) => {
-    const { codigo, lojaId, totalPedido } = req.body;
+// 🗑️ EXCLUIR CUPOM
+router.delete('/:id', async (req, res) => {
     try {
-        const cupom = await Cupom.findOne({ codigo, lojaId, ativo: true });
-
-        if (!cupom) return res.status(404).json({ erro: "Cupom não encontrado ou expirado, macho!" });
-        if (new Date() > cupom.vencimento) return res.status(400).json({ erro: "Esse cupom já venceu!" });
-        if (totalPedido < cupom.usoMinimo) return res.status(400).json({ erro: `O pedido mínimo para esse cupom é R$ ${cupom.usoMinimo}` });
-
-        res.json({ mensagem: "Cupom aplicado! 🎉", tipo: cupom.tipo, valor: cupom.valor });
+        await Cupom.findByIdAndDelete(req.params.id);
+        res.json({ mensagem: "Cupom apagado!" });
     } catch (err) {
-        res.status(500).json({ erro: "Erro ao validar cupom." });
+        res.status(500).json({ erro: err.message });
     }
 });
 

@@ -8,6 +8,7 @@ const assinantesRoutes = require('./routes/assinantes');
 const pedidosRoutes = require('./routes/pedidos');
 const usuariosRoutes = require('./routes/usuarios');
 const produtosRoutes = require('./routes/produtos');
+const cuponsRoutes = require('./routes/cupons');
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api/assinantes', assinantesRoutes);
 app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/produtos', produtosRoutes);
+app.use('/api/cupons', cuponsRoutes);
 
 // 🗄️ 5. CONEXÃO COM O MONGODB
 mongoose.connect(process.env.MONGODB_URI)
