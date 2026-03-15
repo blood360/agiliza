@@ -12,15 +12,16 @@ export default function NovoProduto() {
     preco: '',
     categoria: 'Combos',
     descricao: '',
-    imagem: '' // Vamos salvar como string/URL ou Base64
+    imagem: '',
+    sugestaoId: '', // 👈 Novo campo
+    sugestaoMensagem: 'Macho, esse lanche combina com...' // 👈 Frase matadora
   });
 
+  const [produtosExistentes, setProdutosExistentes] = useState([]); // Para o Select de sugestão
   const [preview, setPreview] = useState(null);
   const [carregando, setCarregando] = useState(false);
   const notify = useNotify();
   const router = useRouter();
-
-  // 1. Pega o lojaId de quem está logado
   const [lojaId, setLojaId] = useState('');
 
   useEffect(() => {
@@ -28,12 +29,25 @@ export default function NovoProduto() {
     if (userJson) {
       const usuario = JSON.parse(userJson);
       setLojaId(usuario.lojaId);
+      carregarProdutos(usuario.lojaId); // Busca produtos para o dropdown
     } else {
       router.push('/login');
     }
   }, [router]);
 
-  // 2. Lógica para converter imagem em Base64 (pra salvar fácil no banco)
+  // Busca produtos da loja para sugerir um como "upsell"
+  const carregarProdutos = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/api/produtos?lojaId=${id}`);
+      if (res.ok) {
+        const dados = await res.json();
+        setProdutosExistentes(dados);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar lista de produtos para sugestão");
+    }
+  };
+
   const handleImagem = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -43,15 +57,12 @@ export default function NovoProduto() {
         img.src = event.target.result;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800; // Largura máxima de 800px (já tá ótimo pra web)
+          const MAX_WIDTH = 800;
           const scaleSize = MAX_WIDTH / img.width;
           canvas.width = MAX_WIDTH;
           canvas.height = img.height * scaleSize;
-
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-          // Transforma em Base64 mas com qualidade 0.7 (comprime 30%)
           const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
           setPreview(dataUrl);
           setForm({ ...form, imagem: dataUrl });
@@ -61,11 +72,8 @@ export default function NovoProduto() {
     }
   };
 
-  // 3. Enviar para o Banco de Dados
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // 3 BUSCA DE EMERGÊNCIA: Se o estado estiver vazio, lê direto do storage na hora do clique
     let idParaSalvar = lojaId;
     if (!idParaSalvar) {
       const userJson = localStorage.getItem('@Agiliza:Usuario');
@@ -76,7 +84,7 @@ export default function NovoProduto() {
     }
 
     if (!idParaSalvar || idParaSalvar === "null") {
-      return notify("Macho, não achei o ID da sua loja. Tente sair e entrar de novo!", "error");
+      return notify("Macho, não achei o ID da sua loja!", "error");
     }
 
     setCarregando(true);
@@ -88,18 +96,19 @@ export default function NovoProduto() {
         body: JSON.stringify({
           ...form,
           preco: parseFloat(form.preco),
-          lojaId: idParaSalvar // 👈 Agora o ID vai garantido!
+          lojaId: idParaSalvar,
+          sugestaoId: form.sugestaoId || null // Envia null se não escolher nada
         })
       });
 
       if (res.ok) {
-        notify("Hambúrguer cadastrado com sucesso! 🍔🔥", "success");
+        notify("Produto cadastrado com prestígio! 🍟✨", "success");
         router.push('/admin/produtos');
       } else {
-        notify("Vixe, erro ao salvar. Verifique os dados!", "error");
+        notify("Vixe, erro ao salvar!", "error");
       }
     } catch (err) {
-      notify("Erro de conexão com o servidor!", "error");
+      notify("Erro de conexão!", "error");
     } finally {
       setCarregando(false);
     }
@@ -111,7 +120,7 @@ export default function NovoProduto() {
         <header className={styles.mainHeader}>
           <div className={styles.welcomeText}>
             <h1>Novo Produto 🍔</h1>
-            <p>Cadastre os itens do seu cardápio com elegância.</p>
+            <p>Cadastre os itens e configure a **Venda Sugerida**.</p>
           </div>
           <Link href="/admin/produtos" className={styles.btnVoltar}>← Voltar</Link>
         </header>
@@ -121,25 +130,11 @@ export default function NovoProduto() {
             <div className={styles.row}>
               <div className={styles.campoForm}>
                 <label>Nome do Produto</label>
-                <input 
-                  type="text" 
-                  placeholder="Ex: Açaí 700ml" 
-                  required
-                  value={form.nome}
-                  onChange={(e) => setForm({...form, nome: e.target.value})}
-                />
+                <input type="text" placeholder="Ex: X-Tudo Piauí" required value={form.nome} onChange={(e) => setForm({...form, nome: e.target.value})} />
               </div>
-
               <div className={styles.uploadDiscreto}>
                 <label className={styles.labelUpload}>
-                  {preview ? (
-                    <img src={preview} alt="Preview" className={styles.previewMini} />
-                  ) : (
-                    <div className={styles.placeholderFoto}>
-                      <span>📸</span>
-                      <small>Foto</small>
-                    </div>
-                  )}
+                  {preview ? <img src={preview} alt="Preview" className={styles.previewMini} /> : <div className={styles.placeholderFoto}><span>📸</span><small>Foto</small></div>}
                   <input type="file" accept="image/*" onChange={handleImagem} hidden />
                 </label>
               </div>
@@ -148,21 +143,11 @@ export default function NovoProduto() {
             <div className={styles.row}>
               <div className={styles.campoForm}>
                 <label>Preço (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  placeholder="10.50" 
-                  required
-                  value={form.preco}
-                  onChange={(e) => setForm({...form, preco: e.target.value})}
-                />
+                <input type="number" step="0.01" placeholder="10.50" required value={form.preco} onChange={(e) => setForm({...form, preco: e.target.value})} />
               </div>
               <div className={styles.campoForm}>
                 <label>Categoria</label>
-                <select 
-                  value={form.categoria}
-                  onChange={(e) => setForm({...form, categoria: e.target.value})}
-                >
+                <select value={form.categoria} onChange={(e) => setForm({...form, categoria: e.target.value})}>
                   <option value="Combos">Combos</option>
                   <option value="Bebidas">Bebidas</option>
                   <option value="Sobremesas">Sobremesas</option>
@@ -173,16 +158,31 @@ export default function NovoProduto() {
 
             <div className={styles.campoForm}>
               <label>Descrição Curta</label>
-              <textarea 
-                placeholder="Descreva o produto (ingredientes, tamanho...)" 
-                rows="3"
-                value={form.descricao}
-                onChange={(e) => setForm({...form, descricao: e.target.value})}
-              ></textarea>
+              <textarea placeholder="Ingredientes, tamanho..." rows="2" value={form.descricao} onChange={(e) => setForm({...form, descricao: e.target.value})}></textarea>
+            </div>
+
+            {/* 🔥 SEÇÃO DE VENDA SUGERIDA (O PRESTÍGIO!) */}
+            <hr style={{margin: '20px 0', border: '0', borderTop: '1px solid #eee'}} />
+            <h3 style={{marginBottom: '10px', fontSize: '16px'}}>Induzir Venda (Upselling) 🚀</h3>
+            
+            <div className={styles.row}>
+              <div className={styles.campoForm}>
+                <label>Sugerir qual produto?</label>
+                <select value={form.sugestaoId} onChange={(e) => setForm({...form, sugestaoId: e.target.value})}>
+                  <option value="">Nenhuma sugestão</option>
+                  {produtosExistentes.map(p => (
+                    <option key={p._id} value={p._id}>{p.nome} - R$ {p.preco.toFixed(2)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.campoForm}>
+                <label>Frase da Sugestão</label>
+                <input type="text" value={form.sugestaoMensagem} onChange={(e) => setForm({...form, sugestaoMensagem: e.target.value})} placeholder="Ex: Combina com uma batata..." />
+              </div>
             </div>
 
             <button type="submit" className={styles.btnConfirmarForm} disabled={carregando}>
-              {carregando ? "Salvando..." : "Salvar Produto ✅"}
+              {carregando ? "Arrochando o nó..." : "Salvar Produto ✅"}
             </button>
           </form>
         </section>

@@ -5,17 +5,16 @@ import styles from '@/app/page.module.css';
 import ListaProdutosGrid from '@/components/ListaProdutosGrid';
 import MenuInferior from '@/components/MenuInferior';
 import BotaoCompartilhar from '@/components/BotaoCompartilhar';
-import { useAgiliza } from "@/context/AgilizaContext"; // 👈 Contexto atualizado
+import { useAgiliza } from "@/context/AgilizaContext"; 
 import { useNotify } from '@/context/ToastContext';
 import Checkout from '@/components/Checkout';
 import API_URL from '@/config/api';
 
 export default function HomeLoja() {
-  // 🛡️ 1. Pegando as peças certas do "tabuleiro" (Contexto)
   const { 
     carrinho, 
     adicionarAoCarrinho, 
-    setLoja, // 👈 Importante para o Checkout saber quem é a loja
+    setLoja, 
     perfilCliente 
   } = useAgiliza();
 
@@ -30,12 +29,13 @@ export default function HomeLoja() {
   const [lojaEstaAberta, setLojaEstaAberta] = useState(true);
   const [carregando, setCarregando] = useState(true);
 
-  // 🛡️ 2. FUNÇÃO MESTRA: Busca dados da Loja e Produtos
+  // 🔥 ESTADO DA VENDA SUGERIDA (O Prestígio!)
+  const [sugestaoAtiva, setSugestaoAtiva] = useState(null);
+
   const carregarDadosDaLoja = useCallback(async () => {
     if (!slug) return;
 
     try {
-      // A. Busca os dados da Loja pelo Slug
       const resLoja = await fetch(`${API_URL}/api/assinantes/loja/${slug}`);
       
       if (resLoja.status === 404) {
@@ -51,14 +51,10 @@ export default function HomeLoja() {
         return;
       }
 
-      // 🎯 AQUI ESTÁ O PULO DO GATO:
-      // Salvamos os dados da loja no estado LOCAL da página E no CONTEXTO
       setConfigsLocal(dadosDaLoja);
-      setLoja(dadosDaLoja); // 👈 Isso avisa o Checkout quem é a loja atual
-      
+      setLoja(dadosDaLoja); 
       setLojaEstaAberta(dadosDaLoja.status_loja !== 'fechada');
 
-      // B. Busca os produtos reais dessa loja específica
       const resProdutos = await fetch(`${API_URL}/api/produtos?lojaId=${dadosDaLoja._id}`);
       const listaProdutos = await resProdutos.json();
       
@@ -74,22 +70,34 @@ export default function HomeLoja() {
     }
   }, [slug, router, notify, setLoja]);
 
-  // 🔄 3. EFEITO DE ENTRADA
   useEffect(() => {
     carregarDadosDaLoja();
   }, [carregarDadosDaLoja]);
+
+  // 🍟 FUNÇÃO: Adicionar com Inteligência (Upselling)
+  const handleAdicionarComSugestao = (produto) => {
+    adicionarAoCarrinho(produto);
+
+    // Se o produto tem um parceiro de venda sugerida...
+    if (produto.sugestaoId) {
+      const sugerido = produtosReais.find(p => p._id === produto.sugestaoId);
+      if (sugerido) {
+        setSugestaoAtiva({
+          ...sugerido,
+          mensagem: produto.sugestaoMensagem || "Macho, aproveite e leve também:"
+        });
+      }
+    } else {
+      notify(`${produto.nome} no carrinho! 🛒`, "success");
+    }
+  };
 
   const totalPedido = carrinho.reduce((acc, item) => acc + item.preco, 0);
 
   const abrirCheckout = () => {
     if (!lojaEstaAberta) return notify("A loja está fechada agora. 🚫", "warning");
     if (carrinho.length === 0) return notify("Adicione um produto antes de finalizar! 🛒", "warning");
-    
-    // 🛡️ Agora ele para aqui se não tiver endereço!
-    if (!perfilCliente.endereco) {
-      return notify("Adicione seu endereço no Perfil! 📍", "warning");
-    }
-    
+    if (!perfilCliente.endereco) return notify("Adicione seu endereço no Perfil! 📍", "warning");
     setIsModalOpen(true);
   };
 
@@ -109,10 +117,12 @@ export default function HomeLoja() {
 
   return (
     <main className={styles.containerLoja}>
+      {/* Banner de Status */}
       <div className={lojaEstaAberta ? styles.bannerAviso : styles.bannerFechado}>
         <span>{lojaEstaAberta ? `✅ Aberto agora: ${nomeExibicao}` : "🚫 ESTAMOS FECHADOS NO MOMENTO"}</span>
       </div>
 
+      {/* Header com Identidade Visual */}
       <header className={styles.headerLoja}>
         <div style={{width: '100%'}}>
           <h1 className={styles.nomeLojaPrimcipal}>{nomeExibicao}</h1>
@@ -121,25 +131,19 @@ export default function HomeLoja() {
         <BotaoCompartilhar />
       </header>
 
+      {/* Grid de Produtos com Lógica de Sugestão */}
       {produtosReais.length > 0 ? (
         <ListaProdutosGrid 
           produtos={produtosReais.map(p => {
             let imagemTratada = '/placeholder.png';
-
             if (p.imagem) {
-              if (p.imagem.startsWith('data:') || p.imagem.startsWith('http')) {
-                imagemTratada = p.imagem;
-              } else {
-                imagemTratada = `data:image/jpeg;base64,${p.imagem}`;
-              }
+              imagemTratada = (p.imagem.startsWith('data:') || p.imagem.startsWith('http')) 
+                ? p.imagem 
+                : `data:image/jpeg;base64,${p.imagem}`;
             }
-
-            return {
-              ...p,
-              imagem: imagemTratada
-            };
+            return { ...p, imagem: imagemTratada };
           })} 
-          onAdd={adicionarAoCarrinho} 
+          onAdd={handleAdicionarComSugestao} 
         />
       ) : (
         <div className={styles.semProdutos}>
@@ -147,16 +151,48 @@ export default function HomeLoja() {
         </div>
       )}
 
+      {/* 🍟 MODAL DE VENDA SUGERIDA (O Pulo do Gato) */}
+      {sugestaoAtiva && (
+        <div className={styles.overlaySugestao}>
+          <div className={styles.modalSugestao}>
+            <button className={styles.btnFecharSugestao} onClick={() => setSugestaoAtiva(null)}>✕</button>
+            <div className={styles.conteudoSugestao}>
+              <span className={styles.emojiSugestao}>✨</span>
+              <h3>{sugestaoAtiva.mensagem}</h3>
+              <div className={styles.cardSugerido}>
+                <img src={sugestaoAtiva.imagem || '/placeholder.png'} alt={sugestaoAtiva.nome} />
+                <div className={styles.detalhesSugerido}>
+                  <strong>{sugestaoAtiva.nome}</strong>
+                  <span>R$ {sugestaoAtiva.preco.toFixed(2)}</span>
+                </div>
+              </div>
+              <button 
+                className={styles.btnAceitarSugestao}
+                onClick={() => {
+                  adicionarAoCarrinho(sugestaoAtiva);
+                  setSugestaoAtiva(null);
+                  notify("Combo garantido! 🚀", "success");
+                }}
+              >
+                Adicionar ao Pedido +
+              </button>
+              <button className={styles.btnNegarSugestao} onClick={() => setSugestaoAtiva(null)}>
+                Agora não, obrigado
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Botão Flutuante */}
       {carrinho.length > 0 && !isModalOpen && (
         <button onClick={abrirCheckout} className={styles.btnFlutuanteCarrinho}>
           🛒 Ver Carrinho (R$ {totalPedido.toFixed(2)})
         </button>
       )}
 
-      {isModalOpen && (
-        <Checkout aoFechar={() => setIsModalOpen(false)} />
-      )}
-
+      {/* Modais do Sistema */}
+      {isModalOpen && <Checkout aoFechar={() => setIsModalOpen(false)} />}
       <MenuInferior />
     </main>
   );

@@ -7,6 +7,19 @@ const ProdutoSchema = new mongoose.Schema({
     imagem: { type: String },
     categoria: { type: String, default: 'Geral' },
     disponivel: { type: Boolean, default: true },
+
+    // 🍟 VENDA SUGERIDA (O segredo do lucro!)
+    // Aqui a gente guarda o ID de outro produto que combina com este
+    sugestaoId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Produto', 
+        default: null 
+    },
+    // A frase matadora pra convencer o cliente
+    sugestaoMensagem: { 
+        type: String, 
+        default: 'Esse lanche combina com...' 
+    },
     
     // 🔗 O DNA DA LOJA: Vincula o produto ao dono dele
     lojaId: { 
