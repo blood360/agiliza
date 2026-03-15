@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import styles from './perfil-admin.module.css';
 import Link from 'next/link';
-import Image from 'next/image'; // 🖼️ Para o preview
+import Image from 'next/image'; 
 import { useNotify } from '@/context/ToastContext';
 import API_URL from '@/config/api';
 
@@ -11,15 +11,17 @@ export default function ConfigurarLoja() {
   const [carregando, setCarregando] = useState(true);
   const [lojaIdReal, setLojaIdReal] = useState(null); 
   
-  // 📝 ESTADO ATUALIZADO (com Logo e Banner)
+  // 📝 ESTADO ATUALIZADO (Com Identidade Visual e Localização)
   const [config, setConfig] = useState({
     loja: '',
     whatsapp: '',
     slug: '',
     valorMinimo: 0,
     taxaEntrega: 0,
-    logo: '',  // 👈 Gaveta da Logo
-    banner: '' // 👈 Gaveta do Banner
+    logo: '',  
+    banner: '',
+    cidade: '', // 👈 Campo novo
+    estado: ''  // 👈 Campo novo
   });
 
   useEffect(() => {
@@ -38,16 +40,16 @@ export default function ConfigurarLoja() {
           const resLoja = await fetch(`${API_URL}/api/assinantes/${idEncontrado}`);
           if (resLoja.ok) {
             const d = await resLoja.json();
-            // 📥 MAPEANDO OS DADOS REAIS
             setConfig({
               loja: d.loja || '',
               whatsapp: d.whatsapp || '',
               slug: d.slug || '',
               valorMinimo: d.valorMinimo || 0,
               taxaEntrega: d.taxaEntrega || 0,
-              // Usamos os placeholders padrão se ele não tiver enviado
               logo: d.logo || 'https://via.placeholder.com/150', 
-              banner: d.banner || 'https://via.placeholder.com/800x200'
+              banner: d.banner || 'https://via.placeholder.com/800x200',
+              cidade: d.cidade || '', // 📥 Busca do banco
+              estado: d.estado || ''   // 📥 Busca do banco
             });
           }
         } else {
@@ -71,7 +73,6 @@ export default function ConfigurarLoja() {
     }
     
     try {
-      // 🚀 SALVANDO TUDO (o ...config já inclui logo e banner)
       const res = await fetch(`${API_URL}/api/assinantes/${lojaIdReal}`, {
         method: 'PUT',
         headers: { 
@@ -82,7 +83,8 @@ export default function ConfigurarLoja() {
           ...config,
           slug: config.slug || config.loja.toLowerCase().replace(/ /g, '-'),
           valorMinimo: Number(config.valorMinimo),
-          taxaEntrega: Number(config.taxaEntrega)
+          taxaEntrega: Number(config.taxaEntrega),
+          estado: config.estado.toUpperCase() // Garante que o estado seja sempre sigla (RJ, PI...)
         })
       });
 
@@ -107,11 +109,9 @@ export default function ConfigurarLoja() {
 
       <form onSubmit={salvarConfiguracoes} className={styles.form}>
         
-        {/* 🖼️ SEÇÃO: IDENTIDADE VISUAL (O Prestígio) */}
+        {/* 🖼️ SEÇÃO: IDENTIDADE VISUAL */}
         <section className={styles.secao}>
           <h2>Identidade Visual 🖼️</h2>
-          
-          {/* Card da Logo */}
           <div className={styles.cardPreviewImage}>
              <label>Sua Logo (Ícone)</label>
              <div className={styles.boxLogoPreview}>
@@ -120,13 +120,11 @@ export default function ConfigurarLoja() {
                     type="text" 
                     value={config.logo}
                     onChange={(e) => setConfig({...config, logo: e.target.value})}
-                    placeholder="Cole o link da sua logo aqui (ex: link do facebook/insta)"
+                    placeholder="Link da sua logo"
                     required
                 />
              </div>
           </div>
-
-          {/* Card do Banner */}
           <div className={styles.cardPreviewImage} style={{marginTop: '20px'}}>
              <label>Seu Banner (Topo da Loja)</label>
              <div className={styles.boxBannerPreview}>
@@ -135,10 +133,38 @@ export default function ConfigurarLoja() {
                     type="text" 
                     value={config.banner}
                     onChange={(e) => setConfig({...config, banner: e.target.value})}
-                    placeholder="Cole o link do seu banner aqui (ex: link do facebook/insta)"
+                    placeholder="Link do seu banner"
                     required
                 />
              </div>
+          </div>
+        </section>
+
+        {/* 📍 SEÇÃO: LOCALIZAÇÃO (Filtro de Região) */}
+        <section className={styles.secao}>
+          <h2>Onde sua Loja Fica? 📍</h2>
+          <div className={styles.gridConfig}>
+            <div className={styles.campo}>
+              <label>Cidade</label>
+              <input 
+                type="text" 
+                value={config.cidade}
+                onChange={(e) => setConfig({...config, cidade: e.target.value})}
+                placeholder="Ex: Magé, Teresina..."
+                required
+              />
+            </div>
+            <div className={styles.campo}>
+              <label>Estado (Sigla)</label>
+              <input 
+                type="text" 
+                value={config.estado}
+                maxLength="2"
+                onChange={(e) => setConfig({...config, estado: e.target.value})}
+                placeholder="Ex: RJ, PI"
+                required
+              />
+            </div>
           </div>
         </section>
 

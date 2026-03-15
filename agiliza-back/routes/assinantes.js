@@ -19,10 +19,19 @@ router.get('/loja/:slug', async (req, res) => {
     }
 });
 
-// 📋 2. BUSCAR TODOS (Painel Admin Geral)
+// 📋 2. BUSCAR TODOS (Com Filtro por Cidade para não mandar rango pra SP! 😂)
 router.get('/', async (req, res) => {
     try {
-        const assinantes = await Assinante.find().sort({ createdAt: -1 });
+        const { cidade } = req.query; // 👈 Pega a cidade da URL (ex: ?cidade=Magé)
+        
+        let filtro = { status: 'Ativo' }; // Só mostra quem tá ativo
+
+        // Se o cliente informar a cidade, a gente filtra no banco
+        if (cidade) {
+            filtro.cidade = { $regex: new RegExp(cidade, "i") }; // "i" ignora maiúsculo/minúsculo
+        }
+
+        const assinantes = await Assinante.find(filtro).sort({ createdAt: -1 });
         res.json(assinantes || []); 
     } catch (err) {
         console.error("❌ ERRO CRÍTICO NO GET ASSINANTES:", err);
@@ -48,10 +57,10 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// 🚀 4. CRIAR NOVO (Cadastro de Lojista)
+// 🚀 4. CRIAR NOVO (Adicionado cidade e estado no cadastro)
 router.post('/', async (req, res) => {
     try {
-        const { loja, dono, plano, whatsapp, vencimento } = req.body;
+        const { loja, dono, plano, whatsapp, vencimento, cidade, estado } = req.body;
 
         if (!loja || !dono) {
             return res.status(400).json({ erro: "Macho, faltou nome da loja ou do dono!" });
@@ -73,7 +82,9 @@ router.post('/', async (req, res) => {
             plano: plano || 'Iniciante', 
             vencimento: dataFinal, 
             whatsapp: whatsapp || '',
-            status: 'Ativo' // Toda loja nasce aberta
+            cidade: cidade || 'Magé', // Padrão se não vier nada
+            estado: estado || 'RJ',
+            status: 'Ativo'
         });
 
         const salvo = await novo.save();
@@ -84,17 +95,14 @@ router.post('/', async (req, res) => {
     }
 });
 
-// 📝 5. ATUALIZAR (Versão Sênior: só atualiza o que vier!)
+// 📝 5. ATUALIZAR (Versão Sênior que tu já aprovou)
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        
-        // Usamos o $set com o req.body direto pra ele atualizar 
-        // APENAS os campos que o front-end mandou (ex: só o status).
         const lojaAtualizada = await Assinante.findByIdAndUpdate(
             id, 
             { $set: req.body }, 
-            { new: true, runValidators: false } // 👈 Validators false evita o erro 500 se faltar campo
+            { new: true, runValidators: false }
         );
 
         if (!lojaAtualizada) {

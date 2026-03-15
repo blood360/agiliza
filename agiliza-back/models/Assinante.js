@@ -8,6 +8,16 @@ const AssinanteSchema = new mongoose.Schema({
     status: { type: String, enum: ['Ativo', 'Inadimplente', 'Bloqueado', 'Teste'], default: 'Ativo' },
     vencimento: { type: Date, required: true },
     whatsapp: { type: String, default: '' },
+    cidade: {
+        type: String,
+        required: true,
+        default: 'Magé'
+    },
+    estado: {
+        type: String,
+        required: true,
+        default: 'RJ'
+    },
     logo: { 
         type: String, 
         default: 'https://via.placeholder.com/150'
