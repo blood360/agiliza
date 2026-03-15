@@ -38,6 +38,7 @@ app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/produtos', produtosRoutes);
 app.use('/api/cupons', cuponsRoutes);
 app.use('/api/clientes', require('./routes/clientes'));
+app.use('/api/relatorios', require('./routes/relatorios'));
 
 // 🗄️ 5. CONEXÃO COM O MONGODB
 mongoose.connect(process.env.MONGODB_URI)

@@ -155,6 +155,7 @@ const toggleLoja = async () => {
           <Link href="/admin/pedidos" className={styles.navItem}>🛒 Pedidos</Link>
           <Link href="/admin/cupons" className={styles.navItem}>🎫 Meus Cupons</Link>
           <Link href="/admin/clientes" className={styles.navItem}>👑 Clientes (CRM)</Link>
+          <Link href="/admin/relatorios" className={styles.navItem}>📈 Relatórios</Link>
           <Link href="/admin/perfil" className={styles.navItem}>⚙️ Configurações</Link>
         </nav>
         <div className={styles.upgradeBox}>
