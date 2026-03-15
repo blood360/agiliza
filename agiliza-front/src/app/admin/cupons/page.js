@@ -11,7 +11,6 @@ export default function GerenciarCupons() {
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
 
-  // Estado para o novo cupom
   const [novoCupom, setNovoCupom] = useState({
     codigo: '',
     tipo: 'fixo',
@@ -42,37 +41,30 @@ export default function GerenciarCupons() {
     try {
       const userJson = localStorage.getItem('@Agiliza:Usuario');
       const usuario = JSON.parse(userJson);
-
       const res = await fetch(`${API_URL}/api/cupons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...novoCupom, lojaId: usuario.lojaId })
       });
-
       if (res.ok) {
         notify("Cupom criado com sucesso! 🎫", "success");
         setNovoCupom({ codigo: '', tipo: 'fixo', valor: '', vencimento: '', usoMinimo: 0 });
         carregarCupons();
       }
-    } catch (err) {
-      notify("Erro ao salvar cupom.", "error");
-    } finally {
-      setEnviando(false);
-    }
+    } catch (err) { notify("Erro ao salvar cupom.", "error"); } 
+    finally { setEnviando(false); }
   };
 
   const excluirCupom = async (id) => {
-    if (!confirm("Vai apagar esse desconto mesmo? O povo vai chiar! 🗑️")) return;
+    if (!confirm("Vai apagar esse desconto mesmo? 🗑️")) return;
     try {
       await fetch(`${API_URL}/api/cupons/${id}`, { method: 'DELETE' });
       setCupons(cupons.filter(c => c._id !== id));
       notify("Cupom removido!", "success");
-    } catch (err) {
-      notify("Erro ao excluir.", "error");
-    }
+    } catch (err) { notify("Erro ao excluir.", "error"); }
   };
 
-  if (carregando) return <p className={styles.vazio}>Buscando os vales de desconto... 🌵</p>;
+  if (carregando) return <p className={styles.vazio}>Arrochando os vales... 🌵</p>;
 
   return (
     <div className={styles.container}>
@@ -82,25 +74,26 @@ export default function GerenciarCupons() {
       </header>
 
       <div className={styles.grid}>
-        {/* Formulário de Cadastro */}
         <section className={styles.cardForm}>
           <h2>Criar Novo Cupom</h2>
           <form onSubmit={salvarCupom}>
-            <label>Código do Cupom</label>
-            <input 
-              type="text" 
-              placeholder="Ex: AGILIZA10"
-              value={novoCupom.codigo}
-              onChange={e => setNovoCupom({...novoCupom, codigo: e.target.value.toUpperCase()})}
-              required 
-            />
+            <div className={styles.campo}>
+              <label>Código do Cupom</label>
+              <input 
+                type="text" 
+                placeholder="Ex: AGILIZA10"
+                value={novoCupom.codigo}
+                onChange={e => setNovoCupom({...novoCupom, codigo: e.target.value.toUpperCase()})}
+                required 
+              />
+            </div>
 
             <div className={styles.row}>
               <div className={styles.campo}>
                 <label>Tipo</label>
                 <select value={novoCupom.tipo} onChange={e => setNovoCupom({...novoCupom, tipo: e.target.value})}>
-                  <option value="fixo">Fixo (R$)</option>
-                  <option value="porcentagem">Porcentagem (%)</option>
+                  <option value="fixo">R$</option>
+                  <option value="porcentagem">%</option>
                 </select>
               </div>
               <div className={styles.campo}>
@@ -114,20 +107,24 @@ export default function GerenciarCupons() {
               </div>
             </div>
 
-            <label>Vencimento</label>
-            <input 
-              type="date" 
-              value={novoCupom.vencimento}
-              onChange={e => setNovoCupom({...novoCupom, vencimento: e.target.value})}
-              required 
-            />
+            <div className={styles.campo}>
+              <label>Vencimento</label>
+              <input 
+                type="date" 
+                value={novoCupom.vencimento}
+                onChange={e => setNovoCupom({...novoCupom, vencimento: e.target.value})}
+                required 
+              />
+            </div>
 
-            <label>Pedido Mínimo (R$)</label>
-            <input 
-              type="number" 
-              value={novoCupom.usoMinimo}
-              onChange={e => setNovoCupom({...novoCupom, usoMinimo: e.target.value})}
-            />
+            <div className={styles.campo}>
+              <label>Pedido Mínimo (R$)</label>
+              <input 
+                type="number" 
+                value={novoCupom.usoMinimo}
+                onChange={e => setNovoCupom({...novoCupom, usoMinimo: e.target.value})}
+              />
+            </div>
 
             <button type="submit" className={styles.btnSalvar} disabled={enviando}>
               {enviando ? "Arrochando..." : "Criar Cupom ✅"}
@@ -135,7 +132,6 @@ export default function GerenciarCupons() {
           </form>
         </section>
 
-        {/* Lista de Cupons */}
         <section className={styles.cardLista}>
           <h2>Meus Cupons</h2>
           {cupons.length > 0 ? (
@@ -144,7 +140,7 @@ export default function GerenciarCupons() {
                 <tr>
                   <th>Código</th>
                   <th>Valor</th>
-                  <th>Expira em</th>
+                  <th>Expira</th>
                   <th>Ações</th>
                 </tr>
               </thead>
@@ -162,7 +158,7 @@ export default function GerenciarCupons() {
               </tbody>
             </table>
           ) : (
-            <p>Nenhum cupom ativo. Crie o primeiro ali do lado! 👈</p>
+            <p>Nenhum cupom ativo. 👈</p>
           )}
         </section>
       </div>
